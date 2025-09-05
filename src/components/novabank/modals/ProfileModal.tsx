@@ -1,3 +1,4 @@
+
 import type { FC } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -18,7 +19,7 @@ export const ProfileModal: FC<ProfileModalProps> = ({ open, onOpenChange }) => {
         </DialogHeader>
         <div className="flex flex-col items-center gap-4 py-4">
           <Avatar className="h-24 w-24 border-4 border-primary">
-            <AvatarImage src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHx3b21hbnxlbnwwfHx8fDE3NTcxMTEwMTl8MA&ixlib=rb-4.1.0&q=80&w=1080" alt="Maria's avatar" data-ai-hint="woman portrait" />
+            <AvatarImage src="https://images.unsplash.com/photo-1500917293891-ef795e70e1f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxibG9uZGUlMjB3b21hbnxlbnwwfHx8fDE3NTcxMTExNzd8MA&ixlib=rb-4.1.0&q=80&w=1080" alt="Maria's avatar" data-ai-hint="woman portrait" />
             <AvatarFallback>
               <User className="h-12 w-12" />
             </AvatarFallback>

@@ -1,3 +1,4 @@
+
 import type { FC } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,7 @@ export const Header: FC<HeaderProps> = ({ onAvatarClick, onNotificationsClick, u
       <div className="flex items-center gap-4">
         <button onClick={onAvatarClick} className="transition-transform active:scale-95 rounded-full focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 outline-none">
           <Avatar className="h-12 w-12 border-2 border-gray-200">
-            <AvatarImage src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHx3b21hbnxlbnwwfHx8fDE3NTcxMTEwMTl8MA&ixlib=rb-4.1.0&q=80&w=1080" alt="Maria's avatar" data-ai-hint="woman portrait" />
+            <AvatarImage src="https://images.unsplash.com/photo-1500917293891-ef795e70e1f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxibG9uZGUlMjB3b21hbnxlbnwwfHx8fDE3NTcxMTExNzd8MA&ixlib=rb-4.1.0&q=80&w=1080" alt="Maria's avatar" data-ai-hint="woman portrait" />
             <AvatarFallback>
               <User className="h-6 w-6" />
             </AvatarFallback>
