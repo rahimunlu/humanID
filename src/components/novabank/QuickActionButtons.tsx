@@ -9,8 +9,8 @@ export function QuickActionButtons() {
 
   const handleSendMoney = () => {
     toast({
-      title: 'Money Sent!',
-      description: 'Your transfer was successful. ✅',
+      title: 'Transaction Completed ✅',
+      description: 'Your transfer was successful.',
     });
   };
 

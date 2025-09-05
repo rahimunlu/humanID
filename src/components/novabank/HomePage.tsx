@@ -1,16 +1,14 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Header } from '@/components/novabank/Header';
 import { BottomNav } from '@/components/novabank/BottomNav';
 import { QuickActionsSheet } from '@/components/novabank/sheets/QuickActionsSheet';
 import { NotificationsPanel } from '@/components/novabank/sheets/NotificationsPanel';
 import { ProfileModal } from '@/components/novabank/modals/ProfileModal';
-import { VerificationModal } from '@/components/novabank/modals/VerificationModal';
 import { RewardModal } from '@/components/novabank/modals/RewardModal';
 import { VerificationInfoModal } from '@/components/novabank/modals/VerificationInfoModal';
 import { TransactionDetailModal } from '@/components/novabank/modals/TransactionDetailModal';
-import { AccountOpeningCard } from '@/components/novabank/cards/AccountOpeningCard';
 import { VerifiedHumanCard } from '@/components/novabank/cards/VerifiedHumanCard';
 import { BalanceCard } from '@/components/novabank/cards/BalanceCard';
 import { QuickActionButtons } from '@/components/novabank/QuickActionButtons';
@@ -31,23 +29,11 @@ export default function HomePage() {
   const [isProfileModalOpen, setProfileModalOpen] = useState(false);
   const [isNotificationsPanelOpen, setNotificationsPanelOpen] = useState(false);
   const [isQuickActionsSheetOpen, setQuickActionsSheetOpen] = useState(false);
-  const [isVerificationModalOpen, setVerificationModalOpen] = useState(false);
-  const [isAccountCreated, setAccountCreated] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [isRewardModalOpen, setRewardModalOpen] = useState(false);
   const [isVerificationInfoModalOpen, setVerificationInfoModalOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
-  const handleVerificationSuccess = () => {
-    setVerificationModalOpen(false);
-    setTimeout(() => {
-      setAccountCreated(true);
-      setShowConfetti(true);
-      const confettiTimer = setTimeout(() => setShowConfetti(false), 4000);
-      return () => clearTimeout(confettiTimer);
-    }, 500);
-  };
-  
   return (
     <div className="bg-gray-100 font-body">
       <main className="relative mx-auto flex min-h-screen max-w-lg flex-col bg-background shadow-2xl">
@@ -56,7 +42,6 @@ export default function HomePage() {
         <ProfileModal open={isProfileModalOpen} onOpenChange={setProfileModalOpen} />
         <NotificationsPanel open={isNotificationsPanelOpen} onOpenChange={setNotificationsPanelOpen} />
         <QuickActionsSheet open={isQuickActionsSheetOpen} onOpenChange={setQuickActionsSheetOpen} />
-        <VerificationModal open={isVerificationModalOpen} onOpenChange={setVerificationModalOpen} onVerify={handleVerificationSuccess} />
         <RewardModal open={isRewardModalOpen} onOpenChange={setRewardModalOpen} />
         <VerificationInfoModal open={isVerificationInfoModalOpen} onOpenChange={setVerificationInfoModalOpen} />
         <TransactionDetailModal transaction={selectedTransaction} onOpenChange={() => setSelectedTransaction(null)} />
@@ -65,11 +50,7 @@ export default function HomePage() {
           <Header onAvatarClick={() => setProfileModalOpen(true)} onNotificationsClick={() => setNotificationsPanelOpen(true)} unreadNotifications={1} />
           
           <div style={{ animationDelay: '0.1s' }} className="animate-slide-up-fade-in">
-            {!isAccountCreated ? (
-              <AccountOpeningCard onOpenAccount={() => setVerificationModalOpen(true)} />
-            ) : (
-              <VerifiedHumanCard />
-            )}
+             <VerifiedHumanCard />
           </div>
 
           <div style={{ animationDelay: '0.2s' }} className="animate-slide-up-fade-in">

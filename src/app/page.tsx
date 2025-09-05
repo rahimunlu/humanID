@@ -1,5 +1,5 @@
-import HomePage from '@/components/novabank/HomePage';
+import OnboardingFlow from '@/components/novabank/onboarding/OnboardingFlow';
 
 export default function Home() {
-  return <HomePage />;
+  return <OnboardingFlow />;
 }
