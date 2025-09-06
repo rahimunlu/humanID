@@ -7,9 +7,13 @@ Handles writing verification data to Golem DB using the established pattern
 import os
 import json
 import asyncio
+import logging
 from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
+
+# Set up logger
+logger = logging.getLogger(__name__)
 
 from golem_base_sdk import GolemBaseClient, Annotation, GenericBytes
 from golem_base_sdk.types import GolemBaseCreate
@@ -78,7 +82,7 @@ async def store_humanity_verification(verification_data: Dict[str, Any]) -> str:
     
     create_operation = GolemBaseCreate(
         data=entity_bytes,
-        btl=1_000_000,
+        ttl=1000000,
         string_annotations=annotations,
         numeric_annotations=[],
     )
@@ -87,6 +91,7 @@ async def store_humanity_verification(verification_data: Dict[str, Any]) -> str:
     if not result or not result[0].entity_key:
         raise RuntimeError("Failed to create humanity verification entity in Golem DB")
     
+    logger.info(f"✅ Humanity verification stored in Golem DB with entity key: {result[0].entity_key.as_hex_string()}")
     return result[0].entity_key.as_hex_string()
 
 async def store_similarity_check(check_data: Dict[str, Any]) -> str:
@@ -124,7 +129,7 @@ async def store_similarity_check(check_data: Dict[str, Any]) -> str:
     
     create_operation = GolemBaseCreate(
         data=entity_bytes,
-        btl=1_000_000,
+        ttl=1000000,
         string_annotations=annotations,
         numeric_annotations=[],
     )

@@ -1,5 +1,5 @@
-# Use Python 3.11 slim image as base
-FROM python:3.11-slim
+# Use Python 3.12 slim image as base
+FROM python:3.12-slim
 
 # Set working directory
 WORKDIR /app
@@ -11,6 +11,9 @@ RUN apt-get update && apt-get install -y \
     coreutils \
     && rm -rf /var/lib/apt/lists/*
 
+# Install curl for health check
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
 # Copy requirements first for better Docker layer caching
 COPY requirements.txt .
 
@@ -18,7 +21,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application files
-COPY main.py .
+COPY main_fastapi.py .
+COPY golem_endpoints.py .
 COPY similarity_check.sh .
 
 # Make the similarity check script executable
@@ -29,8 +33,6 @@ RUN mkdir -p /tmp/biometrics_uploads /tmp/biometrics_encrypted
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
-ENV FLASK_APP=main.py
-ENV FLASK_ENV=production
 
 # Expose port 5000
 EXPOSE 5000
@@ -39,8 +41,5 @@ EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:5000/health || exit 1
 
-# Install curl for health check
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
-
 # Run the application
-CMD ["python", "main.py"]
+CMD ["uvicorn", "main_fastapi:app", "--host", "0.0.0.0", "--port", "5000"]
