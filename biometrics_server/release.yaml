@@ -21,6 +21,9 @@ spec:
         name: maxkoko
         ports:
         - containerPort: 5000
+        envFrom:
+        - secretRef:
+            name: golemdb-secret
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress

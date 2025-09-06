@@ -164,7 +164,6 @@ def notify_golem(endpoint: str, data: Dict[str, Any]) -> bool:
     except Exception as e:
         print(f"❌ Failed to notify Golem DB: {e}")
         return False
-
 # ========= UTILITY FUNCTIONS =========
 async def get_writer_address() -> str:
     """Get the Golem DB writer address"""
@@ -179,3 +178,4 @@ def get_golem_info() -> Dict[str, str]:
         "wss": GOLEM_DB_WSS,
         "writer": "Not connected yet"
     }
+
