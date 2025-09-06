@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { useAppContext } from "@/lib/context";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
-import { useAccount, useBalance } from "wagmi";
 
 type Props = {
   isOpen: boolean;
@@ -14,24 +13,13 @@ type Props = {
 
 export default function CreateWalletModal({ isOpen, onOpenChange }: Props) {
   const { setWalletConnected, setWalletAddress, setWalletBalance } = useAppContext();
-  const { address, isConnected } = useAccount();
-  const { data: balance } = useBalance({
-    address: address,
-  });
 
   const handleCreate = () => {
-    if (isConnected && address && balance) {
-      // Use real wallet data if already connected
-      setWalletAddress(address);
-      setWalletBalance(parseFloat(balance.formatted));
-      setWalletConnected(true);
-    } else {
-      // Create mock wallet only if no real wallet connected
-      const mockAddress = `0x${[...Array(4)].map(() => Math.floor(Math.random() * 16).toString(16)).join('')}...${[...Array(4)].map(() => Math.floor(Math.random() * 16).toString(16)).join('')}`;
-      setWalletAddress(mockAddress.replace('0x', '0xA3...').slice(0, 10) + 'F1B');
-      setWalletBalance(0.42);
-      setWalletConnected(true);
-    }
+    // Generate a mock address
+    const mockAddress = `0x${[...Array(4)].map(() => Math.floor(Math.random() * 16).toString(16)).join('')}...${[...Array(4)].map(() => Math.floor(Math.random() * 16).toString(16)).join('')}`;
+    setWalletAddress(mockAddress.replace('0x', '0xA3...').slice(0, 10) + 'F1B');
+    setWalletBalance(0.42);
+    setWalletConnected(true);
     onOpenChange(false);
   };
 
@@ -39,14 +27,9 @@ export default function CreateWalletModal({ isOpen, onOpenChange }: Props) {
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>
-            {isConnected ? "Use Connected Wallet" : "Create New Wallet"}
-          </DialogTitle>
+          <DialogTitle>Create New Wallet</DialogTitle>
           <DialogDescription>
-            {isConnected 
-              ? `Use your connected wallet with ${balance ? parseFloat(balance.formatted).toFixed(4) : '0'} ETH balance.`
-              : "A new secure wallet will be generated for you."
-            }
+            A new secure wallet will be generated for you.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">
@@ -60,9 +43,7 @@ export default function CreateWalletModal({ isOpen, onOpenChange }: Props) {
         </div>
         <DialogFooter>
           <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button type="button" onClick={handleCreate}>
-            {isConnected ? "Use Connected Wallet" : "I Understand, Create Wallet"}
-          </Button>
+          <Button type="button" onClick={handleCreate}>I Understand, Create Wallet</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
