@@ -1,23 +1,18 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Share2, ArrowRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAppContext } from '@/lib/context';
-import { useToast } from "@/hooks/use-toast";
-import { shareVerificationStatus } from '@/ai/flows/share-verification-status';
+
+import { DashboardHeader } from './_components/dashboard-header';
+import { VerificationHero } from './_components/verification-hero';
+import { WalletSummary } from './_components/wallet-summary';
+import { RecentActivity } from './_components/recent-activity';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function HomePage() {
-  const { isIndexed, walletAddress, walletBalance } = useAppContext();
+  const { isIndexed } = useAppContext();
   const router = useRouter();
-  const { toast } = useToast();
-  const [isSharing, setIsSharing] = useState(false);
 
   useEffect(() => {
     if (!isIndexed) {
@@ -25,85 +20,25 @@ export default function HomePage() {
     }
   }, [isIndexed, router]);
 
-  const handleShare = async () => {
-    if (!walletAddress) return;
-    setIsSharing(true);
-    try {
-      // This is a mocked call to the GenAI flow
-      const result = await shareVerificationStatus({ walletAddress });
-      navigator.clipboard.writeText(result.shareableCode);
-      toast({
-        title: "Copied to Clipboard!",
-        description: `Shareable Code: ${result.shareableCode}`,
-      });
-    } catch (error) {
-      console.error("Share verification error:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Could not generate a shareable code.",
-      });
-    } finally {
-      setIsSharing(false);
-    }
-  };
-
-  const recentActions = [
-    { text: 'Proof published to chain', time: '12s ago' },
-    { text: 'humanID DNA v0.9 connected', time: '3m ago' },
-    { text: 'Wallet created', time: '5m ago' },
-  ];
-
-  if (!isIndexed) return null; // Or a loading skeleton
+  if (!isIndexed) {
+    return (
+        <div className="p-4 md:p-6 space-y-4">
+            <Skeleton className="h-12 w-1/2" />
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-48 w-full" />
+            <Skeleton className="h-64 w-full" />
+        </div>
+    );
+  }
 
   return (
-    <div className="p-4 md:p-6 space-y-8">
-      <header className="flex items-center gap-4">
-        <Avatar className="h-12 w-12">
-          <AvatarImage src="https://picsum.photos/100" data-ai-hint="woman avatar" alt="Maria's avatar" />
-          <AvatarFallback>M</AvatarFallback>
-        </Avatar>
-        <div>
-          <h1 className="text-2xl font-bold">Welcome back!</h1>
-          <p className="text-muted-foreground">maria.eth</p>
-        </div>
-      </header>
-
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle>Wallet Summary</CardTitle>
-          <div className="flex justify-between items-center">
-            <CardDescription className="truncate font-mono text-xs">{walletAddress}</CardDescription>
-            <Badge className="bg-green-100 text-green-800 border-green-200">Verified Human</Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="flex justify-between items-baseline">
-          <span className="text-3xl font-bold">{walletBalance} ETH</span>
-          <Button variant="ghost" size="icon" onClick={handleShare} disabled={isSharing}>
-            <Share2 className="h-5 w-5" />
-          </Button>
-        </CardContent>
-      </Card>
-      
-      <div>
-        <h2 className="text-lg font-semibold mb-2">Recent Actions</h2>
-        <div className="space-y-2">
-          {recentActions.map((action, index) => (
-            <Card key={index} className="p-3">
-              <div className="flex justify-between items-center text-sm">
-                <span>{action.text}</span>
-                <span className="text-muted-foreground">{action.time}</span>
-              </div>
-            </Card>
-          ))}
-        </div>
+    <div className="space-y-4 pb-24">
+      <DashboardHeader />
+      <div className="px-4 md:px-6 space-y-6">
+        <VerificationHero />
+        <WalletSummary />
+        <RecentActivity />
       </div>
-
-      <Link href="/apps" passHref>
-        <Button size="lg" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 transition-transform active:scale-95">
-          Connect to Apps <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
-      </Link>
     </div>
   );
 }

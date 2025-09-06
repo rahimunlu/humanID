@@ -2,59 +2,49 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Wallet, AppWindow, User } from 'lucide-react';
+import { Home, Wallet, Settings, LayoutGrid } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAppContext } from '@/lib/context';
-import { useEffect, useState } from 'react';
-import { useToast } from "@/hooks/use-toast";
 
 const navItems = [
   { href: '/home', icon: Home, label: 'Home' },
   { href: '/wallet', icon: Wallet, label: 'Wallet' },
-  { href: '/apps', icon: AppWindow, label: 'Apps' },
-  { href: '/profile', icon: User, label: 'Profile' },
+  { href: '/apps', icon: LayoutGrid, label: 'Apps' },
+  { href: '/profile', icon: Settings, label: 'Settings' },
 ];
 
 export default function BottomNav() {
   const pathname = usePathname();
   const { isIndexed } = useAppContext();
-  const { toast } = useToast();
   
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  
-  const handleDisabledClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    toast({
-      title: "Verification Required",
-      description: "Please complete the verification process to access this page.",
-    });
-  };
-
-  if (!mounted) {
-    return <div className="h-16 fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/80 border-t" />;
+  // Do not render nav if not indexed (user is in onboarding flow)
+  if (!isIndexed && !['/wallet'].includes(pathname)) {
+    return null;
   }
+
+  // Always show on wallet page for initial connection
+  const showNav = isIndexed || pathname === '/wallet';
+
+  if (!showNav) return null;
   
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
-      <nav className="bg-background/80 backdrop-blur-sm border-t border-border">
-        <div className="flex justify-around items-center h-16 max-w-md mx-auto">
+    <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/80 backdrop-blur-sm border-t">
+      <nav className="h-16">
+        <div className="flex justify-around items-center h-full max-w-md mx-auto px-2">
           {navItems.map((item) => {
             const isActive = pathname.startsWith(item.href);
-            const isDisabled = !isIndexed && item.href !== '/wallet';
-
             return (
               <Link 
-                href={isDisabled ? '#' : item.href} 
+                href={item.href} 
                 key={item.href} 
                 className={cn(
-                  "flex flex-col items-center justify-center h-full w-full gap-1 transition-colors p-2",
-                  isDisabled ? "text-border cursor-not-allowed" : "text-muted-foreground hover:text-foreground"
+                  "flex flex-col items-center justify-center h-full w-full gap-1 transition-colors p-2 rounded-lg",
+                  "text-muted-foreground hover:text-primary",
+                  isActive && "text-primary"
                 )}
-                onClick={isDisabled ? handleDisabledClick : undefined}
-                aria-disabled={isDisabled}
               >
-                <item.icon className={cn('h-6 w-6 transition-colors', isActive && !isDisabled && 'text-primary')} />
+                <item.icon className='h-6 w-6' />
+                {isActive && <span className="text-xs font-medium">{item.label}</span>}
               </Link>
             );
           })}
