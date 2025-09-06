@@ -142,24 +142,36 @@ def notify_golem(endpoint: str, data: Dict[str, Any]) -> bool:
     This function handles both humanity verification and similarity check data
     """
     try:
-        # Run the async function in a new event loop
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+        import threading
+        import concurrent.futures
         
-        try:
+        def run_async_in_thread():
+            """Run async function in a separate thread with proper event loop handling"""
+            # Create a new event loop for this thread
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            try:
+                if endpoint == "humanity_verification":
+                    return loop.run_until_complete(store_humanity_verification(data))
+                elif endpoint == "similarity_check":
+                    return loop.run_until_complete(store_similarity_check(data))
+                else:
+                    raise ValueError(f"Unknown endpoint: {endpoint}")
+            finally:
+                loop.close()
+        
+        # Run the async function in a separate thread to avoid signal issues
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(run_async_in_thread)
+            entity_key = future.result(timeout=30)  # 30 second timeout
+            
             if endpoint == "humanity_verification":
-                entity_key = loop.run_until_complete(store_humanity_verification(data))
                 print(f"✅ Humanity verification stored in Golem DB with entity key: {entity_key}")
-                return True
             elif endpoint == "similarity_check":
-                entity_key = loop.run_until_complete(store_similarity_check(data))
                 print(f"✅ Similarity check stored in Golem DB with entity key: {entity_key}")
-                return True
-            else:
-                print(f"❌ Unknown endpoint: {endpoint}")
-                return False
-        finally:
-            loop.close()
+            
+            return True
             
     except Exception as e:
         print(f"❌ Failed to notify Golem DB: {e}")
