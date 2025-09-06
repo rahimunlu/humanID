@@ -28,7 +28,7 @@ export function VerificationHero() {
           </div>
           <div>
             <h2 className="font-semibold text-foreground">Verified Human</h2>
-            <p className="text-xs text-muted-foreground">DNA verified • ZK proof on-chain</p>
+            <p className="text-xs text-muted-foreground">DNA verified • Proof on-chain</p>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-2 mt-4">
@@ -47,7 +47,7 @@ export function VerificationHero() {
         <DialogContent>
             <DialogHeader>
                 <DialogTitle>On-Chain Proof</DialogTitle>
-                <DialogDescription>This is the transaction hash of your zero-knowledge proof.</DialogDescription>
+                <DialogDescription>This is the transaction hash of your on-chain proof.</DialogDescription>
             </DialogHeader>
             <div className="py-4">
                 <div className="bg-muted p-3 rounded-md font-mono text-xs break-all">

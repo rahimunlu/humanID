@@ -42,7 +42,7 @@ export default function IndexPage() {
             <div className="flex flex-col items-center gap-4">
               <Loader2 className="h-16 w-16 text-primary animate-spin" />
               <h2 className="text-2xl font-semibold">Publishing to chain...</h2>
-              <p className="text-muted-foreground">Your zero-knowledge proof is being indexed on-chain. Please wait.</p>
+              <p className="text-muted-foreground">Your proof is being indexed on-chain. Please wait.</p>
             </div>
           </CardContent>
         </Card>
