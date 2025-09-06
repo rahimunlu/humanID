@@ -1,8 +1,10 @@
 "use client";
 
+import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useAppContext } from "@/lib/context";
+import { useAccount, useBalance, useConnect } from "wagmi";
 
 type Props = {
   isOpen: boolean;
@@ -11,13 +13,26 @@ type Props = {
 
 export default function ConnectWalletModal({ isOpen, onOpenChange }: Props) {
   const { setWalletConnected, setWalletAddress, setWalletBalance } = useAppContext();
+  const { address, isConnected } = useAccount();
+  const { data: balance } = useBalance({
+    address: address,
+  });
+  const { connect, connectors, isPending } = useConnect();
 
-  const handleConnect = (type: 'injected' | 'demo') => {
-    // In a real app, this would involve libraries like ethers.js or wagmi
-    setWalletAddress(type === 'demo' ? '0xA3f...9F1B' : '0xDemo...c4aD');
-    setWalletBalance(0.42);
-    setWalletConnected(true);
-    onOpenChange(false);
+  // Update app context when wallet connects
+  React.useEffect(() => {
+    if (isConnected && address) {
+      setWalletAddress(address);
+      setWalletConnected(true);
+      if (balance) {
+        setWalletBalance(parseFloat(balance.formatted));
+      }
+      onOpenChange(false);
+    }
+  }, [isConnected, address, balance, setWalletAddress, setWalletConnected, setWalletBalance, onOpenChange]);
+
+  const handleConnect = (connector: any) => {
+    connect({ connector });
   };
 
   return (
@@ -26,16 +41,24 @@ export default function ConnectWalletModal({ isOpen, onOpenChange }: Props) {
         <DialogHeader>
           <DialogTitle>Connect Wallet</DialogTitle>
           <DialogDescription>
-            Choose a wallet to connect to your BioChain ID.
+            Choose a wallet to connect to your HumanID. This will connect to Sepolia testnet.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <Button variant="outline" className="justify-start h-14 text-base" onClick={() => handleConnect('injected')}>
-            Injected Wallet (e.g. MetaMask)
-          </Button>
-          <Button variant="outline" className="justify-start h-14 text-base" onClick={() => handleConnect('demo')}>
-            Demo Wallet
-          </Button>
+          {connectors.map((connector) => (
+            <Button
+              key={connector.uid}
+              variant="outline"
+              className="justify-start h-14 text-base"
+              onClick={() => handleConnect(connector)}
+              disabled={isPending}
+            >
+              {connector.name}
+            </Button>
+          ))}
+          <div className="text-center text-sm text-muted-foreground">
+            <p>Make sure you have a wallet extension installed (like MetaMask)</p>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
