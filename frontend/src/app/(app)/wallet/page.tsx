@@ -16,6 +16,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFo
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useAccount, useBalance, useDisconnect } from "wagmi";
 
 const transactions = [
   { type: 'Sent', to: '0x123...abc', amount: '-0.05 ETH', time: '2h ago', status: 'Confirmed', icon: ArrowRight, color: 'text-red-500' },
@@ -33,6 +35,13 @@ export default function WalletPage() {
   const [isSendSheetOpen, setSendSheetOpen] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
+  
+  // RainbowKit hooks
+  const { address, isConnected, chain } = useAccount();
+  const { data: balance } = useBalance({
+    address: address,
+  });
+  const { disconnect } = useDisconnect();
 
   useEffect(() => {
     // This page serves as the entry point if wallet is not connected,
@@ -40,13 +49,22 @@ export default function WalletPage() {
   }, [walletConnected, isIndexed, router]);
 
   const handleCopyAddress = () => {
-    if (walletAddress) {
-      navigator.clipboard.writeText(walletAddress);
+    const addressToCopy = address || walletAddress;
+    if (addressToCopy) {
+      navigator.clipboard.writeText(addressToCopy);
       toast({
         title: "Address Copied!",
         description: "Wallet address copied to clipboard.",
       });
     }
+  };
+
+  const handleDisconnect = () => {
+    disconnect();
+    toast({
+      title: "Wallet Disconnected",
+      description: "You have been disconnected from your wallet.",
+    });
   };
   
   const handleSend = () => {
@@ -119,15 +137,15 @@ export default function WalletPage() {
       <Card className="shadow-lg">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Sepolia Testnet</span>
+            <span className="text-sm text-muted-foreground">{chain?.name || 'Sepolia Testnet'}</span>
              <Badge variant="secondary" className="flex items-center gap-1 bg-green-100 text-green-800 text-xs px-2 py-0.5">
                 <CheckCircle className="h-3 w-3" />
-                Verified
+                Connected
             </Badge>
           </div>
-          <div className="text-4xl font-bold pt-2">{walletBalance} ETH</div>
+          <div className="text-4xl font-bold pt-2">{balance ? parseFloat(balance.formatted).toFixed(4) : '0.0000'} {balance?.symbol || 'ETH'}</div>
            <div className="flex items-center gap-2 text-sm text-muted-foreground pt-1">
-                <span className="font-mono">{walletAddress ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` : '...'}</span>
+                <span className="font-mono">{address ? `${address.slice(0, 6)}...${address.slice(-4)}` : '...'}</span>
                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleCopyAddress}>
                     <Copy className="h-4 w-4" />
                 </Button>
@@ -140,8 +158,8 @@ export default function WalletPage() {
             <Button variant="outline" onClick={() => setSendSheetOpen(true)}>
                 <Send className="mr-2 h-4 w-4" /> Send
             </Button>
-            <Button variant="outline" onClick={() => toast({ title: "Mock Action", description: "Network switch clicked" })}>
-                <Repeat className="mr-2 h-4 w-4" /> Switch
+            <Button variant="outline" onClick={handleDisconnect}>
+                <MoreVertical className="mr-2 h-4 w-4" /> Disconnect
             </Button>
         </CardContent>
       </Card>
@@ -183,7 +201,7 @@ export default function WalletPage() {
                     <QrCode className="h-40 w-40 text-foreground" />
                 </div>
                 <div className="w-full text-center p-3 bg-muted rounded-md">
-                    <span className="font-mono text-sm break-all">{walletAddress}</span>
+                    <span className="font-mono text-sm break-all">{address || walletAddress}</span>
                 </div>
                 <Button className="w-full" onClick={handleCopyAddress}>
                   <Copy className="mr-2 h-4 w-4" />
