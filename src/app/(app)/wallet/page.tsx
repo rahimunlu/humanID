@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const transactions = [
   { type: 'Sent', to: '0x123...abc', amount: '-0.05 ETH', time: '2h ago', status: 'Confirmed', icon: ArrowRight, color: 'text-red-500' },
