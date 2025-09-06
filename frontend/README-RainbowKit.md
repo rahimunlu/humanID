@@ -24,9 +24,16 @@ yarn install
 ### 2. Environment Variables
 Create `.env.local`:
 ```env
-NEXT_PUBLIC_ALCHEMY_API_KEY=your_alchemy_api_key
+# Backend connection (required)
 NEXT_PUBLIC_HUMANID_BACKEND_BASE=http://localhost:8001
+
+# Optional: Custom RPC URLs (if you have them)
+# NEXT_PUBLIC_SEPOLIA_RPC=https://sepolia.infura.io/v3/your_project_id
+# NEXT_PUBLIC_HARDHAT_RPC=http://localhost:8545
+# NEXT_PUBLIC_ALCHEMY_API_KEY=your_alchemy_api_key
 ```
+
+**Note**: No API keys required! The app uses public RPC endpoints by default.
 
 ### 3. Start Development Server
 ```bash

@@ -10,8 +10,8 @@ const config = createConfig({
   chains: [sepolia, hardhat],
   connectors: [injected()],
   transports: { 
-    [sepolia.id]: http("https://rpc.sepolia.org"),
-    [hardhat.id]: http("http://127.0.0.1:8545")
+    [sepolia.id]: http(process.env.NEXT_PUBLIC_SEPOLIA_RPC || "https://rpc.sepolia.org"),
+    [hardhat.id]: http(process.env.NEXT_PUBLIC_HARDHAT_RPC || "http://127.0.0.1:8545")
   },
   ssr: true,
 });
