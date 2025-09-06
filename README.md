@@ -12,17 +12,23 @@ HumanID provides two main verification modes:
 
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Genome Device │───▶│ Biometrics Server│───▶│   GolemDB       │
-│   (device.py)   │    │  (Flask API)     │    │  (Storage)      │
+│   Frontend      │    │ Biometrics Server│    │   GolemDB       │
+│   (Next.js)     │───▶│  (FastAPI)       │───▶│  (Storage)      │
 └─────────────────┘    └──────────────────┘    └─────────────────┘
+         │                       ▲
+         │                       │
+┌─────────────────┐              │
+│   Genome Device │──────────────┘
+│   (device.py)   │
+└─────────────────┘
 ```
 
 ### Components
 
+- **Frontend** (`frontend/`) - Next.js web application with RainbowKit wallet integration
 - **Genome Device** (`genome_device/`) - Generates STR profiles from VCF files and uploads to server
-- **Biometrics Server** (`biometrics_server/`) - Flask API for processing and storing biometric data
+- **Biometrics Server** (`biometrics_server/`) - FastAPI server for processing and storing biometric data
 - **Humanity SDK** (`humanity_sdk/`) - Multi-language SDKs for integration
-- **Web App** (`src/`) - Next.js frontend application
 
 ## 🚀 Quick Start
 
@@ -33,7 +39,24 @@ HumanID provides two main verification modes:
 - Docker (for server deployment)
 - Node.js 18+ (for web app)
 
-### 1. Biometrics Server
+### 1. Frontend Application
+
+**Local Development:**
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The frontend will be available at `http://localhost:3000`
+
+**Features:**
+- Next.js 14 with App Router
+- RainbowKit wallet integration
+- Wallet connection modal
+- Responsive design
+
+### 2. Biometrics Server
 
 The server is deployed at: `https://biometrics-server.biokami.com/`
 
@@ -41,7 +64,7 @@ The server is deployed at: `https://biometrics-server.biokami.com/`
 ```bash
 cd biometrics_server
 pip install -r requirements.txt
-python main.py
+uvicorn main_fastapi:app --host 0.0.0.0 --port 5000
 ```
 
 **Docker Deployment:**
@@ -50,7 +73,7 @@ cd biometrics_server
 ./build.sh
 ```
 
-### 2. Genome Device
+### 3. Genome Device
 
 **Installation:**
 ```bash
@@ -80,8 +103,12 @@ humanID/
 │   ├── generate_str_profile.sh  # STR profile generation
 │   ├── requirements.txt    # Python dependencies
 │   └── README.md          # Device documentation
-├── biometrics_server/      # Flask API server
-│   ├── main.py            # Main server application
+├── frontend/              # Next.js web application
+│   ├── src/              # Source code
+│   ├── package.json      # Dependencies
+│   └── README-RainbowKit.md # Wallet integration docs
+├── biometrics_server/      # FastAPI server
+│   ├── main_fastapi.py   # Main server application
 │   ├── similarity_check.sh # Similarity comparison script
 │   ├── Dockerfile         # Container configuration
 │   ├── build.sh          # Build script
@@ -159,17 +186,54 @@ python device.py identity-confirmation biometrics_server/test_profile2.txt --use
 - **Status**: Deployed and operational
 - **Health Check**: `GET /health`
 
+### Kubernetes Deployment
+
+The biometrics server is deployed on Kubernetes. To deploy manually:
+
+**1. Create GolemDB Secret:**
+```bash
+kubectl create secret generic golemdb-secret \
+  --from-literal=GOLEM_APP_TAG="HumanID" \
+  --from-literal=GOLEM_DB_RPC="https://ethwarsaw.holesky.golemdb.io/rpc" \
+  --from-literal=GOLEM_DB_WSS="wss://ethwarsaw.holesky.golemdb.io/rpc/ws" \
+  --from-literal=PRIVATE_KEY="your_private_key_here" \
+  -n ethwarsaw
+```
+
+**2. Deploy Application:**
+```bash
+cd biometrics_server
+kubectl apply -f release.yaml
+```
+
+**3. Check Deployment Status:**
+```bash
+kubectl get pods -n ethwarsaw
+kubectl logs -l app=web -n ethwarsaw
+```
+
 ### Local Development
 ```bash
 # Start biometrics server
-cd biometrics_server && python main.py
+cd biometrics_server && uvicorn main_fastapi:app --host 0.0.0.0 --port 5000
 
 # Start web application
-npm install && npm run dev
+cd frontend && npm install && npm run dev
 ```
+
+## 🎨 Frontend Features
+
+The frontend application provides a modern web interface for biometric verification:
+
+- **Wallet Integration**: Connect with MetaMask, WalletConnect, and other wallets via RainbowKit
+- **Responsive Design**: Works on desktop and mobile devices
+- **Real-time Status**: Live updates on verification progress
+- **Secure Upload**: Encrypted file upload with progress indicators
+- **Verification History**: View past verification attempts and results
 
 ## 📚 Documentation
 
+- [Frontend README](frontend/README-RainbowKit.md) - Wallet integration and frontend setup
 - [Genome Device README](genome_device/README.md) - Device usage and configuration
 - [Biometrics Server README](biometrics_server/README.md) - Server API documentation
 - [Humanity SDK Documentation](humanity_sdk/) - SDK integration guides
