@@ -19,8 +19,8 @@
     --secondary: 222 47% 97%;
     --secondary-foreground: 220 13% 18%;
 
-    --muted: 220 9% 45%; /* #6B7280 */
-    --muted-foreground: 220 9% 45%;
+    --muted: 220 9% 80%; /* Adjusted from #6B7280 for better contrast */
+    --muted-foreground: 220 9% 45%; /* #6B7280 */
 
     --accent: 25 100% 83%; /* #FFC6A5 - Peach */
     --accent-foreground: 220 13% 18%;
@@ -34,7 +34,7 @@
     --input: 225 17% 91%;
     --ring: 212 100% 77%;
 
-    --radius: 1rem;
+    --radius: 0.75rem; /* 12px */
 
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
@@ -44,7 +44,7 @@
   }
 
   .dark {
-    --background: 220 13% 18%;
+    --background: 220 13% 10%;
     --foreground: 0 0% 98%;
 
     --card: 224 13% 12%;
@@ -59,8 +59,8 @@
     --secondary: 224 13% 22%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 215 9% 55%;
-    --muted-foreground: 215 9% 55%;
+    --muted: 215 9% 35%;
+    --muted-foreground: 215 9% 65%;
 
     --accent: 25 100% 83%;
     --accent-foreground: 220 13% 18%;
@@ -102,5 +102,14 @@
   
   .text-mint {
     color: #8FE3C1;
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.5s ease-out forwards;
   }
 }

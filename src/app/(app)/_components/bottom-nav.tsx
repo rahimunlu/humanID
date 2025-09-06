@@ -34,12 +34,12 @@ export default function BottomNav() {
                 className={cn(
                   "flex flex-col items-center justify-center h-full w-full gap-1 transition-all p-2 rounded-lg duration-200 active:scale-95",
                   "text-muted-foreground hover:text-primary",
-                  isActive ? "text-primary font-medium" : "text-gray-600"
+                  isActive ? "text-primary" : "text-gray-500"
                 )}
               >
-                <item.icon className={cn('h-6 w-6 transition-all', isActive && 'fill-primary text-primary')} />
+                <item.icon className={cn('h-6 w-6 transition-all', isActive ? 'fill-primary' : '')} />
                 <span className={cn(
-                  "text-xs transition-opacity duration-200",
+                  "text-xs font-medium transition-opacity duration-200",
                   isActive ? "opacity-100" : "opacity-0"
                 )}>
                   {item.label}

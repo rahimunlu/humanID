@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Copy, ArrowRight, CheckCircle, QrCode, ArrowDown, Send, Repeat, Wallet as WalletIcon } from 'lucide-react';
+import { Copy, ArrowRight, CheckCircle, QrCode, ArrowDown, Send, Repeat, Wallet as WalletIcon, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAppContext } from '@/lib/context';
@@ -12,21 +12,24 @@ import CreateWalletModal from './_components/create-wallet-modal';
 import { useToast } from "@/hooks/use-toast";
 import { Logo } from '@/components/logo';
 import { Badge } from '@/components/ui/badge';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
 
 const transactions = [
-  { type: 'Sent', to: '0x123...abc', amount: '0.05 ETH', time: '2h ago' },
-  { type: 'Received', from: '0x456...def', amount: '0.1 ETH', time: '1d ago' },
-  { type: 'Connected', to: 'Finance App', amount: '', time: '3d ago' },
-  { type: 'Sent', to: '0x789...ghi', amount: '0.01 ETH', time: '5d ago' },
+  { type: 'Sent', to: '0x123...abc', amount: '-0.05 ETH', time: '2h ago', status: 'Confirmed', icon: ArrowRight, color: 'text-red-500' },
+  { type: 'Received', from: '0x456...def', amount: '+0.1 ETH', time: '1d ago', status: 'Confirmed', icon: ArrowDown, color: 'text-green-500'},
+  { type: 'Connected', to: 'Finance App', amount: '', time: '3d ago', status: 'Completed', icon: CheckCircle, color: 'text-blue-500' },
+  { type: 'Sent', to: '0x789...ghi', amount: '-0.01 ETH', time: '5d ago', status: 'Confirmed', icon: ArrowRight, color: 'text-red-500' },
 ];
+
 
 export default function WalletPage() {
   const { walletConnected, walletAddress, walletBalance, isIndexed } = useAppContext();
   const [isConnectModalOpen, setConnectModalOpen] = useState(false);
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
   const [isReceiveSheetOpen, setReceiveSheetOpen] = useState(false);
+  const [isSendSheetOpen, setSendSheetOpen] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
 
@@ -45,10 +48,11 @@ export default function WalletPage() {
     }
   };
   
-  const handleQuickAction = (action: string) => {
+  const handleSend = () => {
+    setSendSheetOpen(false);
     toast({
-      title: `${action} Clicked`,
-      description: `This is a mock action.`,
+      title: "Transaction Sent!",
+      description: "Your transaction has been submitted.",
     });
   }
 
@@ -132,10 +136,10 @@ export default function WalletPage() {
             <Button variant="outline" onClick={() => setReceiveSheetOpen(true)}>
                 <ArrowDown className="mr-2 h-4 w-4" /> Receive
             </Button>
-            <Button variant="outline" onClick={() => handleQuickAction('Send')}>
+            <Button variant="outline" onClick={() => setSendSheetOpen(true)}>
                 <Send className="mr-2 h-4 w-4" /> Send
             </Button>
-            <Button variant="outline" onClick={() => handleQuickAction('Switch Network')}>
+            <Button variant="outline" onClick={() => toast({ title: "Mock Action", description: "Network switch clicked" })}>
                 <Repeat className="mr-2 h-4 w-4" /> Switch
             </Button>
         </CardContent>
@@ -144,23 +148,26 @@ export default function WalletPage() {
       <div>
         <h2 className="text-lg font-semibold mb-4">Transactions</h2>
         <div className="space-y-2">
-          {transactions.map((tx, i) => (
-            <Card key={i} className="p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
-              <div className="flex items-center gap-4">
-                <div className={`p-2 rounded-full ${tx.type === 'Sent' ? 'bg-red-100' : 'bg-green-100'}`}>
-                  {tx.type === 'Sent' ? <ArrowRight className="h-5 w-5 text-red-500" /> : <ArrowDown className="h-5 w-5 text-green-500" />}
+          {transactions.map((tx, i) => {
+            const Icon = tx.icon;
+            return (
+              <Card key={i} className="p-3 flex items-center justify-between hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => toast({title: "Transaction Details", description: "This is a mock view."})}>
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-full bg-muted/50`}>
+                    <Icon className={`h-5 w-5 ${tx.color}`} />
+                  </div>
+                  <div>
+                    <p className="font-medium">{tx.type} {tx.type !== 'Connected' && 'ETH'}</p>
+                    <p className="text-sm text-muted-foreground">{tx.to}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium">{tx.type} {tx.type !== 'Connected' && 'ETH'}</p>
-                  <p className="text-sm text-muted-foreground">{tx.to}</p>
+                <div className="text-right">
+                  <p className={`font-mono font-medium ${tx.color}`}>{tx.amount}</p>
+                  <p className="text-xs text-muted-foreground">{tx.time}</p>
                 </div>
-              </div>
-              <div className="text-right">
-                <p className={`font-mono ${tx.type === 'Sent' ? 'text-red-500' : 'text-green-500'}`}>{tx.amount}</p>
-                <p className="text-xs text-muted-foreground">{tx.time}</p>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            )
+          })}
         </div>
       </div>
       
@@ -172,7 +179,7 @@ export default function WalletPage() {
             </SheetHeader>
             <div className="py-8 flex flex-col items-center gap-6">
                 <div className="p-4 bg-white rounded-lg border">
-                    <QrCode className="h-40 w-40" />
+                    <QrCode className="h-40 w-40 text-foreground" />
                 </div>
                 <div className="w-full text-center p-3 bg-muted rounded-md">
                     <span className="font-mono text-sm break-all">{walletAddress}</span>
@@ -182,6 +189,31 @@ export default function WalletPage() {
                   Copy Address
                 </Button>
             </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={isSendSheetOpen} onOpenChange={setSendSheetOpen}>
+        <SheetContent className="flex flex-col">
+            <SheetHeader>
+                <SheetTitle>Send ETH</SheetTitle>
+                <SheetDescription>Enter the amount and recipient address.</SheetDescription>
+            </SheetHeader>
+            <div className="py-4 flex-grow space-y-4">
+                <div>
+                    <Label htmlFor="send-address">Recipient Address</Label>
+                    <Input id="send-address" placeholder="0x..." />
+                </div>
+                 <div>
+                    <Label htmlFor="send-amount">Amount</Label>
+                    <Input id="send-amount" type="number" placeholder="0.0" />
+                </div>
+            </div>
+            <SheetFooter>
+                <Button className="w-full" onClick={handleSend}>
+                  <Send className="mr-2 h-4 w-4" />
+                  Send
+                </Button>
+            </SheetFooter>
         </SheetContent>
       </Sheet>
 

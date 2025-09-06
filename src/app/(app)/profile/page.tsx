@@ -2,20 +2,20 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ChevronRight, LogOut, ShieldCheck, User, X, Bell, Trash2, ShieldAlert } from 'lucide-react';
+import { ChevronRight, LogOut, ShieldCheck, User, Bell, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from '@/components/ui/separator';
-import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useAppContext } from '@/lib/context';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { setWalletConnected, walletAddress } = useAppContext();
+  const { setWalletConnected, walletAddress, setDeviceConnected } = useAppContext();
   const [showENS, setShowENS] = useState(true);
   const { toast } = useToast();
 
@@ -33,6 +33,7 @@ export default function ProfilePage() {
   };
   
   const handleForgetDevice = () => {
+    setDeviceConnected(false);
     toast({
         title: "Device Forgotten",
         description: "humanID DNA v0.9 has been removed.",
@@ -54,12 +55,12 @@ export default function ProfilePage() {
             </Avatar>
             <div>
               <h2 className="text-xl font-bold">Maria</h2>
-              <p className="text-muted-foreground text-sm">{showENS ? 'maria.eth' : walletAddress}</p>
+              <p className="text-muted-foreground text-sm font-mono">{showENS ? 'maria.eth' : walletAddress}</p>
             </div>
         </CardHeader>
         <CardContent>
             <div className="flex items-center justify-between">
-                <Label htmlFor="ens-toggle" className="flex items-center gap-3">
+                <Label htmlFor="ens-toggle" className="flex items-center gap-3 cursor-pointer">
                     <User className="h-5 w-5 text-muted-foreground" />
                     <span>Show ENS Name</span>
                 </Label>
@@ -68,9 +69,9 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      <div className="space-y-6">
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-foreground px-1">Device & Security</h3>
         <Card>
-            <CardHeader><h3 className="text-lg font-semibold">Device & Security</h3></CardHeader>
             <CardContent className="p-0">
                 <div className="p-4">
                     <div className="flex justify-between items-center">
@@ -78,7 +79,7 @@ export default function ProfilePage() {
                             <p className="font-medium">humanID DNA v0.9</p>
                             <p className="text-sm text-green-600">Connected</p>
                         </div>
-                        <Button variant="outline" onClick={() => handleToast('Reconnecting...')}>Reconnect</Button>
+                        <Button variant="outline" size="sm" onClick={() => handleToast('Reconnecting...')}>Reconnect</Button>
                     </div>
                 </div>
                  <Separator />
@@ -92,7 +93,7 @@ export default function ProfilePage() {
                 <Separator />
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
-                        <button className="flex items-center justify-between w-full p-4 hover:bg-muted/50 text-destructive">
+                        <button className="flex items-center justify-start w-full p-4 hover:bg-muted/50 text-destructive">
                             <span className="flex items-center gap-3">
                                 <Trash2 className="h-5 w-5" />
                                 <span>Forget this Device</span>
@@ -103,7 +104,7 @@ export default function ProfilePage() {
                         <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Forgetting this device will require you to pair it again to perform new verifications.
+                            Forgetting this device will require you to pair it again to perform new verifications. Your on-chain verification remains valid.
                         </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -115,8 +116,8 @@ export default function ProfilePage() {
             </CardContent>
         </Card>
         
+        <h3 className="text-lg font-semibold text-foreground px-1 pt-2">Application</h3>
         <Card>
-            <CardHeader><h3 className="text-lg font-semibold">Application</h3></CardHeader>
             <CardContent className="p-0">
                 <button className="flex items-center justify-between w-full p-4 hover:bg-muted/50" onClick={() => handleToast('Notifications')}>
                     <span className="flex items-center gap-3">
@@ -126,7 +127,7 @@ export default function ProfilePage() {
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
                 </button>
                 <Separator />
-                 <button className="flex items-center justify-between w-full p-4 hover:bg-muted/50 text-destructive" onClick={handleLogout}>
+                 <button className="flex items-center justify-start w-full p-4 hover:bg-muted/50 text-destructive" onClick={handleLogout}>
                     <div className="flex items-center gap-3">
                         <LogOut className="h-5 w-5" />
                         <span>Disconnect Wallet</span>
@@ -135,8 +136,8 @@ export default function ProfilePage() {
             </CardContent>
         </Card>
         
-        <div className="text-center text-xs text-muted-foreground">
-            App Version 1.0.0
+        <div className="text-center text-xs text-muted-foreground pt-4">
+            App Version 1.0.1
         </div>
 
       </div>
