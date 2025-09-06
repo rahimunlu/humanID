@@ -28,7 +28,7 @@ export function DashboardHeader() {
           className="transition-transform active:scale-95"
         >
           <Avatar className="h-12 w-12 border-2 border-background shadow-md">
-            <AvatarImage src="https://picsum.photos/100" data-ai-hint="woman avatar" alt="Maria's avatar" />
+            <AvatarImage src="https://images.unsplash.com/photo-1500917293891-ef795e70e1f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxibG9uZGUlMjB3b21hbnxlbnwwfHx8fDE3NTcxMTExNzd8MA&ixlib=rb-4.1.0&q=80&w=1080" data-ai-hint="woman avatar" alt="Maria's avatar" />
             <AvatarFallback>M</AvatarFallback>
           </Avatar>
         </button>

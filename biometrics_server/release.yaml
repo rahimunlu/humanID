@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: web
+  name: web
+  namespace: ethwarsaw
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+      - image: docker.io/maxkokocom/biometrics:latest
+        imagePullPolicy: Always
+        name: maxkoko
+        ports:
+        - containerPort: 5000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: maxkoko
+  namespace: ethwarsaw
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod-cloudflare"
+    kubernetes.io/ingress.class: "nginx"
+spec:
+  tls:
+    - hosts:
+        - biometrics-server.biokami.com
+        - www.biometrics-server.biokami.com
+      secretName: biometrics-server-biokami-com
+  rules:
+    - host: www.biometrics-server.biokami.com
+      http:
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: web
+              port:
+                number: 8080
+    - host: biometrics-server.biokami.com
+      http:
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: web
+              port:
+                number: 8080
+  ingressClassName: nginx
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: web
+  name: web
+  namespace: ethwarsaw
+spec:
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 5000
+  selector:
+    app: web
+  sessionAffinity: None
+  type: ClusterIP
+status:
+  loadBalancer: {}
+

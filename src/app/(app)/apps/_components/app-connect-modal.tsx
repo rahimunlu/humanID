@@ -5,17 +5,12 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle } from "lucide-react";
-
-type App = {
-  name: string;
-  description: string;
-  image: string;
-} | null;
+import type { App } from '../page';
 
 type Props = {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  app: App;
+  app: App | null;
 };
 
 export default function AppConnectModal({ isOpen, onOpenChange, app }: Props) {
@@ -24,7 +19,7 @@ export default function AppConnectModal({ isOpen, onOpenChange, app }: Props) {
   const handleApprove = () => {
     toast({
       title: "Connection Successful!",
-      description: `Connected to ${app?.name} - KYC satisfied via BioChain.`,
+      description: `Connected to ${app?.name} - KYC satisfied via HumanID.`,
     });
     onOpenChange(false);
   };
