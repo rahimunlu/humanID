@@ -1,5 +1,6 @@
 import React from 'react';
 import BottomNav from './_components/bottom-nav';
+import { AppProvider } from '@/lib/context';
 
 export default function AppLayout({
   children,
@@ -8,7 +9,7 @@ export default function AppLayout({
 }) {
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <main className="flex-1 pb-24 md:pb-6">{children}</main>
+      <main className="flex-1">{children}</main>
       <BottomNav />
     </div>
   );
