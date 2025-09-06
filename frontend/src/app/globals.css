@@ -1,0 +1,115 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 20% 98%; /* #FAFAFB */
+    --foreground: 220 13% 18%; /* #1F2937 */
+
+    --card: 0 0% 100%; /* #FFFFFF */
+    --card-foreground: 220 13% 18%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 13% 18%;
+
+    --primary: 212 100% 77%; /* #8BB9FF - Blue */
+    --primary-foreground: 220 13% 18%;
+
+    --secondary: 222 47% 97%;
+    --secondary-foreground: 220 13% 18%;
+
+    --muted: 220 9% 80%; /* Adjusted from #6B7280 for better contrast */
+    --muted-foreground: 220 9% 45%; /* #6B7280 */
+
+    --accent: 25 100% 83%; /* #FFC6A5 - Peach */
+    --accent-foreground: 220 13% 18%;
+
+    --destructive: 356 100% 81%; /* #FF9AA2 - Error */
+    --destructive-foreground: 0 0% 100%;
+    
+    --warning: 45 100% 77%; /* #FFD48A */
+
+    --border: 225 17% 91%; /* #E8EAF0 */
+    --input: 225 17% 91%;
+    --ring: 212 100% 77%;
+
+    --radius: 0.75rem; /* 12px */
+
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+  }
+
+  .dark {
+    --background: 220 13% 10%;
+    --foreground: 0 0% 98%;
+
+    --card: 224 13% 12%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 224 13% 12%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 212 100% 77%;
+    --primary-foreground: 220 13% 18%;
+
+    --secondary: 224 13% 22%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 215 9% 35%;
+    --muted-foreground: 215 9% 65%;
+
+    --accent: 25 100% 83%;
+    --accent-foreground: 220 13% 18%;
+
+    --destructive: 356 100% 81%;
+    --destructive-foreground: 0 0% 98%;
+    
+    --warning: 45 100% 77%;
+
+    --border: 224 13% 22%;
+    --input: 224 13% 22%;
+    --ring: 212 100% 77%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer utilities {
+  .text-success {
+    color: #6FD3AF;
+  }
+  .bg-success {
+    background-color: #6FD3AF;
+  }
+  .bg-success-soft {
+    background-color: #e3f7f0;
+  }
+  .text-success-foreground {
+    color: #1F2937;
+  }
+  
+  .text-mint {
+    color: #8FE3C1;
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.5s ease-out forwards;
+  }
+}
