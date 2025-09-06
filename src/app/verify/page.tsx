@@ -7,7 +7,9 @@ import { useAppContext } from '@/lib/context';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import Confetti from '@/app/index/_components/confetti';
+import Confetti from '@/components/confetti';
+
+export const dynamic = 'force-dynamic';
 
 export default function VerifyPage() {
   const { setIsVerified, deviceConnected } = useAppContext();
@@ -48,7 +50,7 @@ export default function VerifyPage() {
               <Button
                 size="lg"
                 className="w-full mt-4 transition-transform active:scale-95 bg-green-500 hover:bg-green-600 text-primary-foreground"
-                onClick={() => router.push('/index')}
+                onClick={() => router.push('/indexing')}
               >
                 Continue
               </Button>

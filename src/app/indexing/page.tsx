@@ -7,9 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAppContext } from '@/lib/context';
 import { useToast } from "@/hooks/use-toast";
-import Confetti from './_components/confetti';
+import Confetti from '@/components/confetti';
 
-export default function IndexPage() {
+export const dynamic = 'force-dynamic';
+
+export default function IndexingPage() {
   const { isVerified, setIsIndexed } = useAppContext();
   const [isIndexing, setIsIndexing] = useState(true);
   const router = useRouter();
@@ -29,7 +31,7 @@ export default function IndexPage() {
         title: "Success!",
         description: "Your wallet has been indexed as a Verified Human.",
       });
-    }, 3000); // Simulate 3 seconds of indexing
+    }, 3000);
 
     return () => clearTimeout(timer);
   }, [setIsIndexed, toast]);
@@ -66,3 +68,5 @@ export default function IndexPage() {
     </div>
   );
 }
+
+
