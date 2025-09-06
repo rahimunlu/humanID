@@ -4,6 +4,7 @@ import { AppProvider } from '@/lib/context';
 import { Toaster } from "@/components/ui/toaster";
 import { Inter } from 'next/font/google';
 import { cn } from '@/lib/utils';
+import WagmiProviderWrapper from '@/lib/rainbowkit-provider';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -27,10 +28,12 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
       </head>
       <body className="font-body bg-background">
-        <AppProvider>
-          {children}
-          <Toaster />
-        </AppProvider>
+        <WagmiProviderWrapper>
+          <AppProvider>
+            {children}
+            <Toaster />
+          </AppProvider>
+        </WagmiProviderWrapper>
       </body>
     </html>
   );
