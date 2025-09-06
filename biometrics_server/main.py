@@ -85,8 +85,8 @@ app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
 ENCRYPTION_KEY = Fernet.generate_key()
 cipher_suite = Fernet(ENCRYPTION_KEY)
 
-# GolemDB configuration (replace with actual endpoint)
-GOLEMDB_BASE_URL = os.getenv('GOLEMDB_BASE_URL', 'http://localhost:8080')
+# Import Golem DB integration
+from golem_endpoints import notify_golem
 
 def allowed_file(filename: str) -> bool:
     """Check if file extension is allowed"""
@@ -117,19 +117,7 @@ def decrypt_file(encrypted_path: str, output_path: str) -> str:
     
     return output_path
 
-def notify_golemdb(endpoint: str, data: Dict[str, Any]) -> bool:
-    """Send notification to GolemDB"""
-    try:
-        response = requests.post(
-            f"{GOLEMDB_BASE_URL}/{endpoint}",
-            json=data,
-            headers={'Content-Type': 'application/json'},
-            timeout=10
-        )
-        return response.status_code == 200
-    except Exception as e:
-        print(f"Failed to notify GolemDB: {e}")
-        return False
+# notify_golemdb function is now imported from golem_endpoints.py
 
 def get_file_hash(file_path: str) -> str:
     """Calculate SHA-256 hash of a file"""
@@ -327,7 +315,7 @@ def first_humanity_verification():
             'verification_type': 'first_humanity_verification'
         }
         
-        golemdb_success = notify_golemdb('humanity_verification', golemdb_data)
+        golemdb_success = notify_golem('humanity_verification', golemdb_data)
         if golemdb_success:
             logger.info(f"   ✅ GolemDB notification sent successfully")
         else:
@@ -531,7 +519,7 @@ def similarity_check():
                 'check_type': 'similarity_check'
             }
             
-            golemdb_success = notify_golemdb('similarity_check', golemdb_data)
+            golemdb_success = notify_golem('similarity_check', golemdb_data)
             
             # Clean up files
             os.remove(upload_path)
