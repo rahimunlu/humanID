@@ -10,7 +10,7 @@ export function Logo() {
         <path d="M12 12L6 9" stroke="currentColor" strokeWidth="2" />
         <path d="M6 6L18 18" stroke="currentColor" strokeWidth="1.5" strokeDasharray="2 2" />
       </svg>
-      <h1 className="text-xl font-bold text-foreground">BioChain</h1>
+      <h1 className="text-xl font-bold text-foreground">HumanID</h1>
     </div>
   );
 }

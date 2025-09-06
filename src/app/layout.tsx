@@ -12,7 +12,7 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'BioChain',
+  title: 'HumanID',
   description: 'Verify your humanity, on-chain.',
 };
 
