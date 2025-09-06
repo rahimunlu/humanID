@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import '@rainbow-me/rainbowkit/styles.css';
 import { AppProvider } from '@/lib/context';
 import { Toaster } from "@/components/ui/toaster";
 import { Inter } from 'next/font/google';
