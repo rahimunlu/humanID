@@ -18,14 +18,10 @@ export default function BottomNav() {
   const { isIndexed } = useAppContext();
   
   // Do not render nav if not indexed (user is in onboarding flow)
-  if (!isIndexed && !['/wallet'].includes(pathname)) {
+  // Or on wallet page if not indexed (initial connection)
+  if (!isIndexed) {
     return null;
   }
-
-  // Always show on wallet page for initial connection
-  const showNav = isIndexed || pathname === '/wallet';
-
-  if (!showNav) return null;
   
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/80 backdrop-blur-sm border-t">
@@ -43,7 +39,7 @@ export default function BottomNav() {
                   isActive && "text-primary"
                 )}
               >
-                <item.icon className='h-6 w-6' />
+                <item.icon className={cn('h-6 w-6', isActive && 'fill-primary')} />
                 {isActive && <span className="text-xs font-medium">{item.label}</span>}
               </Link>
             );
