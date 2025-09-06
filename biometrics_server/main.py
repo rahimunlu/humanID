@@ -608,6 +608,60 @@ def get_verification_status(user_id: str):
             'error': f'Internal server error: {str(e)}'
         }), 500
 
+@app.route('/latest_verification', methods=['GET'])
+def get_latest_verification():
+    """Get the latest humanity verification from Golem DB"""
+    try:
+        logger.info("Fetching latest verification from Golem DB")
+        
+        # Import the fetch function from golem_endpoints
+        from golem_endpoints import fetch_latest_verification_sync
+        
+        # Fetch the latest verification
+        verification = fetch_latest_verification_sync()
+        
+        if verification is None:
+            return jsonify({
+                'error': 'No verification found in Golem DB'
+            }), 404
+        
+        logger.info(f"Found latest verification: {verification.get('verification_id', 'unknown')}")
+        return jsonify({
+            'status': 'success',
+            'verification': verification
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error fetching latest verification: {e}")
+        return jsonify({
+            'error': f'Failed to fetch verification: {str(e)}'
+        }), 500
+
+@app.route('/all_verifications', methods=['GET'])
+def get_all_verifications():
+    """Get all humanity verifications from Golem DB"""
+    try:
+        logger.info("Fetching all verifications from Golem DB")
+        
+        # Import the fetch function from golem_endpoints
+        from golem_endpoints import fetch_all_verifications_sync
+        
+        # Fetch all verifications
+        verifications = fetch_all_verifications_sync()
+        
+        logger.info(f"Found {len(verifications)} verifications in Golem DB")
+        return jsonify({
+            'status': 'success',
+            'verifications': verifications,
+            'count': len(verifications)
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error fetching verifications: {e}")
+        return jsonify({
+            'error': f'Failed to fetch verifications: {str(e)}'
+        }), 500
+
 @app.errorhandler(413)
 def too_large(e):
     """Handle file too large error"""

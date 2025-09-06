@@ -176,6 +176,186 @@ def notify_golem(endpoint: str, data: Dict[str, Any]) -> bool:
     except Exception as e:
         print(f"❌ Failed to notify Golem DB: {e}")
         return False
+# ========= FETCH FUNCTIONS =========
+async def fetch_latest_verification_by_timestamp() -> Optional[Dict[str, Any]]:
+    """Fetch the latest humanity verification from Golem DB based on timestamp annotation"""
+    client = await get_golem_client()
+    
+    # Get account address
+    account_address = client.get_account_address()
+    
+    # Get all entities owned by this account
+    entity_keys = await client.get_entities_of_owner(account_address)
+    
+    latest_verification = None
+    latest_timestamp = None
+    
+    for entity_key in entity_keys:
+        try:
+            # Get metadata to check if this is a humanity verification
+            metadata = await client.get_entity_metadata(entity_key)
+            
+            # Check if this is a humanity verification
+            is_humanity_verification = False
+            verification_timestamp = None
+            
+            for annotation in metadata.string_annotations:
+                if annotation.key == "recordType" and annotation.value == "humanity_verification":
+                    is_humanity_verification = True
+                elif annotation.key == "timestamp":
+                    verification_timestamp = annotation.value
+            
+            if is_humanity_verification and verification_timestamp:
+                # Parse timestamp to compare
+                try:
+                    timestamp_dt = datetime.fromisoformat(verification_timestamp)
+                    
+                    # Check if this is the latest
+                    if latest_timestamp is None or timestamp_dt > latest_timestamp:
+                        # Get the actual data using get_storage_value
+                        entity_key_hex = entity_key.as_hex_string()
+                        storage_value = await client.get_storage_value(GenericBytes.from_hex_string(entity_key_hex))
+                        
+                        if storage_value:
+                            # Decode the JSON data
+                            entity_data = json.loads(storage_value.decode('utf-8'))
+                            
+                            # Add all annotations to the response
+                            annotations_dict = {}
+                            for annotation in metadata.string_annotations:
+                                annotations_dict[annotation.key] = annotation.value
+                            
+                            # Merge entity data with annotations
+                            latest_verification = {
+                                **entity_data,
+                                'entity_key': entity_key_hex,
+                                'annotations': annotations_dict
+                            }
+                            latest_timestamp = timestamp_dt
+                            
+                except ValueError as e:
+                    print(f"Error parsing timestamp {verification_timestamp}: {e}")
+                    continue
+                    
+        except Exception as e:
+            print(f"Error processing entity {entity_key}: {e}")
+            continue
+    
+    return latest_verification
+
+async def fetch_all_verifications() -> list[Dict[str, Any]]:
+    """Fetch all humanity verifications from Golem DB, sorted by timestamp (newest first)"""
+    client = await get_golem_client()
+    
+    # Get account address
+    account_address = client.get_account_address()
+    
+    # Get all entities owned by this account
+    entity_keys = await client.get_entities_of_owner(account_address)
+    
+    verifications = []
+    
+    for entity_key in entity_keys:
+        try:
+            # Get metadata to check if this is a humanity verification
+            metadata = await client.get_entity_metadata(entity_key)
+            
+            # Check if this is a humanity verification
+            is_humanity_verification = False
+            verification_timestamp = None
+            
+            for annotation in metadata.string_annotations:
+                if annotation.key == "recordType" and annotation.value == "humanity_verification":
+                    is_humanity_verification = True
+                elif annotation.key == "timestamp":
+                    verification_timestamp = annotation.value
+            
+            if is_humanity_verification and verification_timestamp:
+                try:
+                    # Get the actual data using get_storage_value
+                    entity_key_hex = entity_key.as_hex_string()
+                    storage_value = await client.get_storage_value(GenericBytes.from_hex_string(entity_key_hex))
+                    
+                    if storage_value:
+                        # Decode the JSON data
+                        entity_data = json.loads(storage_value.decode('utf-8'))
+                        
+                        # Add all annotations to the response
+                        annotations_dict = {}
+                        for annotation in metadata.string_annotations:
+                            annotations_dict[annotation.key] = annotation.value
+                        
+                        # Merge entity data with annotations
+                        verification_data = {
+                            **entity_data,
+                            'entity_key': entity_key_hex,
+                            'annotations': annotations_dict
+                        }
+                        verifications.append(verification_data)
+                        
+                except Exception as e:
+                    print(f"Error processing entity data {entity_key}: {e}")
+                    continue
+                    
+        except Exception as e:
+            print(f"Error processing entity {entity_key}: {e}")
+            continue
+    
+    # Sort by timestamp (newest first)
+    verifications.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
+    return verifications
+
+# ========= SYNCHRONOUS WRAPPER FUNCTIONS =========
+def fetch_latest_verification_sync() -> Optional[Dict[str, Any]]:
+    """
+    Synchronous wrapper for fetching latest verification from Golem DB
+    Use this function from Flask routes
+    """
+    try:
+        import threading
+        import concurrent.futures
+        
+        def run_async_in_thread():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                return loop.run_until_complete(fetch_latest_verification_by_timestamp())
+            finally:
+                loop.close()
+        
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(run_async_in_thread)
+            return future.result(timeout=30)  # 30 second timeout
+            
+    except Exception as e:
+        print(f"❌ Failed to fetch latest verification: {e}")
+        return None
+
+def fetch_all_verifications_sync() -> list[Dict[str, Any]]:
+    """
+    Synchronous wrapper for fetching all verifications from Golem DB
+    Use this function from Flask routes
+    """
+    try:
+        import threading
+        import concurrent.futures
+        
+        def run_async_in_thread():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                return loop.run_until_complete(fetch_all_verifications())
+            finally:
+                loop.close()
+        
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(run_async_in_thread)
+            return future.result(timeout=30)  # 30 second timeout
+            
+    except Exception as e:
+        print(f"❌ Failed to fetch verifications: {e}")
+        return []
+
 # ========= UTILITY FUNCTIONS =========
 async def get_writer_address() -> str:
     """Get the Golem DB writer address"""
