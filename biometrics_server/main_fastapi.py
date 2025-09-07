@@ -593,6 +593,94 @@ async def get_verification_status(user_id: str):
         logger.error(f"❌ Error getting verification status: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
+@app.get("/golem-verification/{user_id}")
+async def get_golem_verification_by_user(user_id: str):
+    """Get verification data directly from Golem DB by searching for user_id annotation"""
+    try:
+        from golem_endpoints import get_golem_client
+        from golem_base_sdk import GenericBytes
+        import json
+        
+        logger.info(f"🔍 Searching Golem DB for user: {Fore.GREEN}{user_id}{Style.RESET_ALL}")
+        
+        # Connect to Golem DB
+        client = await get_golem_client()
+        writer_address = client.get_account_address()
+        logger.info(f"📝 Writer address: {writer_address}")
+        
+        # Get all entities owned by this account
+        entity_keys = await client.get_entities_of_owner(writer_address)
+        logger.info(f"🔍 Found {len(entity_keys)} entities owned by writer")
+        
+        latest_verification = None
+        latest_timestamp = None
+        
+        # Search through all entities for matching user_id
+        for entity_key in entity_keys:
+            try:
+                # Get metadata to check annotations
+                metadata = await client.get_entity_metadata(entity_key)
+                
+                # Check if this entity matches our user_id and is a humanity verification
+                is_target_user = False
+                is_humanity_verification = False
+                entity_timestamp = None
+                
+                for annotation in metadata.string_annotations:
+                    if annotation.key == "user_id" and annotation.value == user_id:
+                        is_target_user = True
+                    elif annotation.key == "recordType" and annotation.value == "humanity_verification":
+                        is_humanity_verification = True
+                    elif annotation.key == "timestamp":
+                        entity_timestamp = annotation.value
+                
+                # If this matches our criteria and is newer than current latest
+                if is_target_user and is_humanity_verification and entity_timestamp:
+                    if not latest_timestamp or entity_timestamp > latest_timestamp:
+                        logger.info(f"📅 Found newer verification: {entity_timestamp}")
+                        
+                        # Get the full entity data
+                        entity_key_hex = entity_key.as_hex_string()
+                        storage_value = await client.get_storage_value(GenericBytes.from_hex_string(entity_key_hex))
+                        
+                        if storage_value:
+                            # Decode the JSON data
+                            entity_data = json.loads(storage_value.decode('utf-8'))
+                            
+                            # Collect all annotations
+                            annotations = {}
+                            for annotation in metadata.string_annotations:
+                                annotations[annotation.key] = annotation.value
+                            
+                            # Update latest verification
+                            latest_verification = {
+                                **entity_data,
+                                'entity_key': entity_key_hex,
+                                'annotations': annotations,
+                                'source': 'golem_db_direct'
+                            }
+                            latest_timestamp = entity_timestamp
+                            
+            except Exception as error:
+                logger.warning(f"⚠️ Error processing entity {entity_key.as_hex_string()}: {error}")
+                continue
+        
+        if latest_verification:
+            logger.info(f"✅ Found latest verification for user {user_id}")
+            return {
+                "status": "success",
+                "verification": latest_verification
+            }
+        else:
+            logger.warning(f"❌ No verification found for user {user_id}")
+            raise HTTPException(status_code=404, detail=f"No verification found for user {user_id}")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error fetching verification from Golem DB for user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch verification for user {user_id}: {str(e)}")
+
 @app.get("/verification-with-golem/{user_id}")
 async def get_verification_with_golem_db(user_id: str):
     """Get verification data using local biometrics data enhanced with Golem DB annotations"""
