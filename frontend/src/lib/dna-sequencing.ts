@@ -35,6 +35,9 @@ export class DNASequencingService {
       console.log('🏥 Checking genome device health at:', API_ENDPOINTS.GENOME_DEVICE.HEALTH);
       const response = await fetch(API_ENDPOINTS.GENOME_DEVICE.HEALTH, {
         mode: 'cors',
+        headers: {
+          'ngrok-skip-browser-warning': 'true',
+        },
       });
       console.log('🏥 Health check response:', response.status, response.statusText);
       return response.ok;
@@ -58,6 +61,7 @@ export class DNASequencingService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
         },
         body: JSON.stringify(request),
         mode: 'cors', // Explicitly set CORS mode
@@ -98,7 +102,11 @@ export class DNASequencingService {
    */
   async getStatus(userId: string): Promise<SequencingStatus | null> {
     try {
-      const response = await fetch(API_ENDPOINTS.GENOME_DEVICE.STATUS(userId));
+      const response = await fetch(API_ENDPOINTS.GENOME_DEVICE.STATUS(userId), {
+        headers: {
+          'ngrok-skip-browser-warning': 'true',
+        },
+      });
       
       if (!response.ok) {
         if (response.status === 404) {
@@ -156,7 +164,11 @@ export class DNASequencingService {
    */
   async getAllStatuses(): Promise<SequencingStatus[]> {
     try {
-      const response = await fetch(API_ENDPOINTS.GENOME_DEVICE.LIST_STATUS);
+      const response = await fetch(API_ENDPOINTS.GENOME_DEVICE.LIST_STATUS, {
+        headers: {
+          'ngrok-skip-browser-warning': 'true',
+        },
+      });
       
       if (!response.ok) {
         throw new Error('Failed to get all statuses');

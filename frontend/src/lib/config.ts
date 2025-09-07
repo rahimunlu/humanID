@@ -13,8 +13,8 @@ export const API_CONFIG = {
   // Genome device server (new) - Physical device on local network
   // Direct connection from browser to local Raspberry Pi (HTTP)
   GENOME_DEVICE: typeof window !== 'undefined'
-    ? (window as any).ENV?.NEXT_PUBLIC_GENOME_DEVICE_URL || 'http://spit-on-that-thing.local:8002'
-    : 'http://spit-on-that-thing.local:8002',
+    ? (window as any).ENV?.NEXT_PUBLIC_GENOME_DEVICE_URL || 'https://3054cc94ecee.ngrok-free.app'
+    : 'https://3054cc94ecee.ngrok-free.app',
   
   // HumanID backend (existing)
   HUMANID_BACKEND: typeof window !== 'undefined'

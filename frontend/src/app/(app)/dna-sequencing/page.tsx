@@ -164,7 +164,7 @@ export default function DNASequencingPage() {
             <div>
               <span className="font-medium">Server URL:</span>
               <p className="text-muted-foreground font-mono">
-                http://spit-on-that-thing.local:8002
+                https://3054cc94ecee.ngrok-free.app
               </p>
             </div>
             <div>
