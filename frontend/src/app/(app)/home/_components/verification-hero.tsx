@@ -33,27 +33,35 @@ export function VerificationHero() {
   const fetchLatestVerification = async () => {
     setIsLoading(true);
     try {
-      // Target user ID from the biometrics server
+      // Target user ID from the external biometrics server
       const targetUserId = '0x1bc868c8C92B7fD35900f6d687067748ADbd8571';
       
-      // Call the HumanID biometrics server endpoint that integrates with Golem DB
-      const response = await fetch(`http://localhost:5000/verification-with-golem/${targetUserId}`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.status === 'success' && data.verification) {
-          setVerificationData(data.verification);
-          console.log('✅ Fetched verification data via biometrics server + Golem DB:', data.verification);
-        } else {
-          throw new Error('No verification data in response');
-        }
+      console.log('🔍 Fetching verification data via golem-endpoints service...');
+      
+      // Call our golem-endpoints service which handles the full flow:
+      // 1. Fetches from external biometrics server
+      // 2. Gets golem_entity_key from response
+      // 3. Fetches full verification data from Golem DB
+      const response = await fetch(`http://localhost:8001/api/v1/verification-by-user/${targetUserId}`);
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status} - ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('✅ Full verification data from golem-endpoints:', data);
+      
+      if (data.status === 'success' && data.verification) {
+        setVerificationData(data.verification);
+        console.log('✅ Successfully loaded verification with Golem DB annotations');
       } else {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        throw new Error('Invalid response format from verification API');
       }
     } catch (error) {
       console.error('❌ Error fetching verification:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch verification data",
+        description: `Failed to fetch verification data: ${error.message}`,
         variant: "destructive"
       });
       setVerificationData(null);
@@ -103,7 +111,7 @@ export function VerificationHero() {
         <DialogContent className="max-w-2xl">
             <DialogHeader>
                 <DialogTitle>🔗 Live Biometrics + Golem DB Verification</DialogTitle>
-                <DialogDescription>Real-time data: Latest verification from biometrics server, with full annotations from Golem DB blockchain</DialogDescription>
+                <DialogDescription>Real-time data: Fetched from https://biometrics-server.biokami.com using golem_entity_key to retrieve full annotations from Golem DB blockchain</DialogDescription>
             </DialogHeader>
             <div className="py-4 space-y-4">
               {isLoading ? (
