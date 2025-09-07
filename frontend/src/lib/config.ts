@@ -16,10 +16,10 @@ export const API_CONFIG = {
     ? (window as any).ENV?.NEXT_PUBLIC_GENOME_DEVICE_URL || 'https://3054cc94ecee.ngrok-free.app'
     : 'https://3054cc94ecee.ngrok-free.app',
   
-  // HumanID backend (existing)
+  // HumanID backend (existing) - NOT USED ANYMORE, DIRECT GOLEM DB CONNECTION
   HUMANID_BACKEND: typeof window !== 'undefined'
-    ? (window as any).ENV?.NEXT_PUBLIC_HUMANID_BACKEND_BASE || 'http://localhost:8001'
-    : 'http://localhost:8001',
+    ? (window as any).ENV?.NEXT_PUBLIC_HUMANID_BACKEND_BASE || 'https://api.humanid.biokami.com'
+    : 'https://api.humanid.biokami.com',
 } as const;
 
 // API endpoints
