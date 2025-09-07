@@ -100,7 +100,7 @@ export default function WalletPage() {
                       <CheckCircle className="h-6 w-6 text-success" />
                       <CardTitle>Wallet Connected</CardTitle>
                   </div>
-                  <CardDescription>Sepolia Testnet</CardDescription>
+                  <CardDescription>{chain?.name || 'Unknown Network'}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between p-3 bg-muted/50 rounded-md">
@@ -137,7 +137,7 @@ export default function WalletPage() {
       <Card className="shadow-lg">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">{chain?.name || 'Sepolia Testnet'}</span>
+            <span className="text-sm text-muted-foreground">{chain?.name || 'Unknown Network'}</span>
              <Badge variant="secondary" className="flex items-center gap-1 bg-green-100 text-green-800 text-xs px-2 py-0.5">
                 <CheckCircle className="h-3 w-3" />
                 Connected

@@ -38,7 +38,7 @@ export default function ConnectWalletModal({ isOpen, onOpenChange }: Props) {
         <DialogHeader>
           <DialogTitle>Connect Wallet</DialogTitle>
           <DialogDescription>
-            Choose a wallet to connect to your HumanID. This will connect to Sepolia testnet.
+            Choose a wallet to connect to your HumanID. Supports Ethereum Mainnet, Sepolia Testnet, and local development.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
