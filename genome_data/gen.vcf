@@ -1,0 +1,35 @@
+##fileformat=VCFv4.2
+##fileDate=20241220
+##source=example_generator
+##reference=GRCh38
+##contig=<ID=chr1,length=248956422>
+##contig=<ID=chr2,length=242193529>
+##contig=<ID=chr3,length=198295559>
+##contig=<ID=chr4,length=190214555>
+##contig=<ID=chr5,length=181538259>
+##INFO=<ID=AC,Number=A,Type=Integer,Description="Allele count in genotypes">
+##INFO=<ID=AN,Number=1,Type=Integer,Description="Total number of alleles in called genotypes">
+##INFO=<ID=AF,Number=A,Type=Float,Description="Allele Frequency">
+##INFO=<ID=DP,Number=1,Type=Integer,Description="Total read depth">
+##INFO=<ID=MQ,Number=1,Type=Float,Description="RMS Mapping Quality">
+##INFO=<ID=FS,Number=1,Type=Float,Description="Fisher's exact test for strand bias">
+##INFO=<ID=QD,Number=1,Type=Float,Description="Variant Quality by Depth">
+##INFO=<ID=SOR,Number=1,Type=Float,Description="Symmetric Odds Ratio">
+##INFO=<ID=MQRankSum,Number=1,Type=Float,Description="Z-score from Wilcoxon rank sum test of Alt vs Ref read mapping qualities">
+##INFO=<ID=ReadPosRankSum,Number=1,Type=Float,Description="Z-score from Wilcoxon rank sum test of Alt vs Ref read position bias">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths for the ref and alt alleles in the order listed">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
+##FORMAT=<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">
+##FORMAT=<ID=PL,Number=G,Type=Integer,Description="Normalized, Phred-scaled likelihoods for genotypes as defined in the VCF specification">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	SAMPLE1
+chr1	1000000	rs123456	A	G	60	PASS	AC=1;AN=2;AF=0.5;DP=20;MQ=60.0;FS=0.0;QD=3.0;SOR=1.0;MQRankSum=0.0;ReadPosRankSum=0.0	GT:AD:DP:GQ:PL	0/1:10,10:20:60:60,0,60
+chr1	2000000	rs234567	C	T	70	PASS	AC=1;AN=2;AF=0.5;DP=25;MQ=65.0;FS=0.0;QD=2.8;SOR=1.2;MQRankSum=0.5;ReadPosRankSum=-0.2	GT:AD:DP:GQ:PL	0/1:12,13:25:70:70,0,70
+chr1	3000000	.	AT	A	45	PASS	AC=1;AN=2;AF=0.5;DP=15;MQ=55.0;FS=2.0;QD=3.0;SOR=0.8;MQRankSum=-0.5;ReadPosRankSum=0.3	GT:AD:DP:GQ:PL	0/1:8,7:15:45:45,0,45
+chr2	5000000	rs345678	G	GC	80	PASS	AC=1;AN=2;AF=0.5;DP=30;MQ=70.0;FS=1.0;QD=2.7;SOR=1.1;MQRankSum=0.2;ReadPosRankSum=-0.1	GT:AD:DP:GQ:PL	0/1:15,15:30:80:80,0,80
+chr2	6000000	rs456789	T	C	55	PASS	AC=1;AN=2;AF=0.5;DP=18;MQ=58.0;FS=0.5;QD=3.1;SOR=0.9;MQRankSum=-0.3;ReadPosRankSum=0.4	GT:AD:DP:GQ:PL	0/1:9,9:18:55:55,0,55
+chr3	10000000	.	AAAAA	AAAA	65	PASS	AC=1;AN=2;AF=0.5;DP=22;MQ=62.0;FS=1.5;QD=3.0;SOR=1.3;MQRankSum=0.1;ReadPosRankSum=-0.2	GT:AD:DP:GQ:PL	0/1:11,11:22:65:65,0,65
+chr3	15000000	rs567890	A	T	75	PASS	AC=1;AN=2;AF=0.5;DP=28;MQ=68.0;FS=0.8;QD=2.7;SOR=1.0;MQRankSum=0.4;ReadPosRankSum=0.1	GT:AD:DP:GQ:PL	0/1:14,14:28:75:75,0,75
+chr4	20000000	rs678901	C	G	50	PASS	AC=1;AN=2;AF=0.5;DP=16;MQ=56.0;FS=1.2;QD=3.1;SOR=0.8;MQRankSum=-0.2;ReadPosRankSum=0.3	GT:AD:DP:GQ:PL	0/1:8,8:16:50:50,0,50
+chr4	25000000	.	TTTT	TTT	40	PASS	AC=1;AN=2;AF=0.5;DP=12;MQ=52.0;FS=2.5;QD=3.3;SOR=1.4;MQRankSum=-0.6;ReadPosRankSum=0.5	GT:AD:DP:GQ:PL	0/1:6,6:12:40:40,0,40
+chr5	30000000	rs789012	G	A	85	PASS	AC=1;AN=2;AF=0.5;DP=32;MQ=72.0;FS=0.3;QD=2.7;SOR=0.9;MQRankSum=0.3;ReadPosRankSum=-0.1	GT:AD:DP:GQ:PL	0/1:16,16:32:85:85,0,85
