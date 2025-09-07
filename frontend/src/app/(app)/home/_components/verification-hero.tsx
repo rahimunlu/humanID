@@ -1,14 +1,67 @@
 "use client";
 
-import { useState } from 'react';
-import { Share2, ShieldCheck, CheckCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Share2, ShieldCheck, CheckCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
+interface VerificationData {
+  verification_id: string;
+  user_id: string;
+  humanity_score: number;
+  timestamp: string;
+  entity_key?: string;
+  annotations?: {
+    [key: string]: string;
+  };
+  external_kyc_document_id?: string;
+  file_hash?: string;
+  verification_type?: string;
+  schema?: string;
+  app?: string;
+  record_type?: string;
+  written_by?: string;
+}
+
 export function VerificationHero() {
   const { toast } = useToast();
   const [isProofModalOpen, setProofModalOpen] = useState(false);
+  const [verificationData, setVerificationData] = useState<VerificationData | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const fetchLatestVerification = async () => {
+    setIsLoading(true);
+    try {
+      // Call the real API endpoint to fetch latest verification from Golem DB
+      const response = await fetch('http://localhost:8001/api/v1/latest-verification');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.status === 'success' && data.verification) {
+          setVerificationData(data.verification);
+          console.log('✅ Fetched real Golem DB data:', data.verification);
+        } else {
+          throw new Error('No verification data in response');
+        }
+      } else {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('❌ Error fetching verification from Golem DB:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch verification data from Golem DB",
+        variant: "destructive"
+      });
+      setVerificationData(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLatestVerification();
+  }, []);
 
   const handleShare = () => {
     const mockLink = 'https://bio.chain/verify/maria.eth';
@@ -44,15 +97,143 @@ export function VerificationHero() {
       </div>
       
       <Dialog open={isProofModalOpen} onOpenChange={setProofModalOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
             <DialogHeader>
-                <DialogTitle>On-Chain Proof</DialogTitle>
-                <DialogDescription>This is the transaction hash of your on-chain proof.</DialogDescription>
+                <DialogTitle>🔗 Live Golem DB Verification</DialogTitle>
+                <DialogDescription>Real-time data fetched from Golem DB blockchain - latest verification by timestamp</DialogDescription>
             </DialogHeader>
-            <div className="py-4">
-                <div className="bg-muted p-3 rounded-md font-mono text-xs break-all">
-                    0x7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b
+            <div className="py-4 space-y-4">
+              {isLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                  <span className="ml-2">Fetching latest verification from Golem DB...</span>
                 </div>
+              ) : verificationData ? (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Verification ID</label>
+                      <div className="bg-muted p-2 rounded-md font-mono text-xs break-all">
+                        {verificationData.verification_id}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">User ID</label>
+                      <div className="bg-muted p-2 rounded-md font-mono text-xs break-all">
+                        {verificationData.user_id}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Humanity Score</label>
+                      <div className="bg-muted p-2 rounded-md font-mono text-sm">
+                        {(verificationData.humanity_score * 100).toFixed(1)}%
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Timestamp</label>
+                      <div className="bg-muted p-2 rounded-md font-mono text-xs">
+                        {new Date(verificationData.timestamp).toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Entity Key (Golem DB)</label>
+                    <div className="bg-muted p-3 rounded-md font-mono text-xs break-all">
+                      {verificationData.entity_key || 'N/A'}
+                    </div>
+                  </div>
+                  
+                  {verificationData.annotations && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">All Annotations</label>
+                      <div className="bg-muted p-3 rounded-md space-y-2">
+                        {Object.entries(verificationData.annotations).map(([key, value]) => (
+                          <div key={key} className="flex justify-between items-center text-xs">
+                            <span className="font-medium text-muted-foreground">{key}:</span>
+                            <span className="font-mono break-all ml-2">{value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">KYC Document ID</label>
+                      <div className="bg-muted p-2 rounded-md font-mono text-xs break-all">
+                        {verificationData.external_kyc_document_id || 'N/A'}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">File Hash</label>
+                      <div className="bg-muted p-2 rounded-md font-mono text-xs break-all">
+                        {verificationData.file_hash || 'N/A'}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Verification Type</label>
+                      <div className="bg-muted p-2 rounded-md font-mono text-xs">
+                        {verificationData.verification_type || 'N/A'}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Schema Version</label>
+                      <div className="bg-muted p-2 rounded-md font-mono text-xs">
+                        {verificationData.schema || 'N/A'}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Written By (Golem DB Address)</label>
+                    <div className="bg-muted p-2 rounded-md font-mono text-xs break-all">
+                      {verificationData.written_by || 'N/A'}
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end space-x-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        if (verificationData.entity_key) {
+                          navigator.clipboard.writeText(verificationData.entity_key);
+                          toast({
+                            title: "Copied!",
+                            description: "Entity key copied to clipboard.",
+                          });
+                        }
+                      }}
+                    >
+                      Copy Entity Key
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        fetchLatestVerification();
+                        toast({
+                          title: "Refreshed!",
+                          description: "Latest verification fetched from Golem DB.",
+                        });
+                      }}
+                    >
+                      🔄 Refresh from Golem DB
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  No verification data found
+                </div>
+              )}
             </div>
         </DialogContent>
       </Dialog>
