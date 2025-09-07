@@ -188,6 +188,40 @@ async def get_writer_address() -> str:
     return client.get_account_address()
 
 # ========= FETCH FUNCTIONS =========
+async def fetch_verification_by_entity_key(entity_key_hex: str) -> Optional[dict]:
+    """Fetch a specific verification from Golem DB by entity_key"""
+    client = await get_golem_client()
+    
+    try:
+        # Get metadata for the specific entity key
+        entity_key = GenericBytes.from_hex_string(entity_key_hex)
+        metadata = await client.get_entity_metadata(entity_key)
+        
+        # Get the actual data using get_storage_value
+        storage_value = await client.get_storage_value(entity_key)
+        
+        if storage_value:
+            # Decode the JSON data
+            entity_data = json.loads(storage_value.decode('utf-8'))
+            
+            # Add all annotations to the response
+            annotations_dict = {}
+            for annotation in metadata.string_annotations:
+                annotations_dict[annotation.key] = annotation.value
+            
+            # Merge entity data with annotations
+            return {
+                **entity_data,
+                'entity_key': entity_key_hex,
+                'annotations': annotations_dict,
+                'source': 'golem_db'
+            }
+    except Exception as e:
+        print(f"Error processing entity {entity_key_hex}: {e}")
+        return None
+    
+    return None
+
 async def fetch_latest_verification_by_timestamp() -> Optional[dict]:
     """Fetch the latest humanity verification from Golem DB based on timestamp annotation"""
     client = await get_golem_client()
