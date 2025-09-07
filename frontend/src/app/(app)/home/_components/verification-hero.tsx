@@ -27,6 +27,8 @@ interface VerificationData {
 }
 
 export function VerificationHero() {
+  console.log('🚀 VerificationHero component loaded - DIRECT GOLEM DB VERSION - v2.0');
+  
   const { toast } = useToast();
   const { address } = useAccount();
   const [isProofModalOpen, setProofModalOpen] = useState(false);
@@ -34,6 +36,7 @@ export function VerificationHero() {
   const [isLoading, setIsLoading] = useState(false);
 
   const fetchLatestVerification = async () => {
+    console.log('🔥 DIRECT GOLEM DB FETCH FUNCTION CALLED - NO API CALLS!');
     setIsLoading(true);
     try {
       // Use connected wallet address, fallback to hardcoded for testing
