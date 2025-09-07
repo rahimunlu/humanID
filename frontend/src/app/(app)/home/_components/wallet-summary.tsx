@@ -40,7 +40,7 @@ export function WalletSummary() {
       </CardHeader>
       <CardContent>
         <div className="flex items-baseline justify-between">
-            <span className="text-3xl font-bold">{walletBalance} ETH</span>
+            <span className="text-3xl font-bold">${walletBalance.toFixed(2)}</span>
             <span className="text-sm text-muted-foreground">Sepolia Testnet</span>
         </div>
         <div className="grid grid-cols-3 gap-2 mt-4">

@@ -109,7 +109,7 @@ export default function WalletPage() {
                       <Copy className="h-4 w-4" />
                     </Button>
                   </div>
-                  <div className="text-4xl font-bold">{walletBalance} ETH</div>
+                  <div className="text-4xl font-bold">${walletBalance.toFixed(2)}</div>
                 </CardContent>
               </Card>
               
