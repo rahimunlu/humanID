@@ -22,14 +22,14 @@ export default function CreateWalletModal({ isOpen, onOpenChange }: Props) {
   const handleCreate = () => {
     if (isConnected && address && balance) {
       // Use real wallet data if already connected
-      setWalletAddress(address);
-      setWalletBalance(parseFloat(balance.formatted));
+      // Note: walletAddress, walletConnected, and walletBalance are now automatically 
+      // updated by the AppProvider context using wagmi hooks
       setWalletConnected(true);
     } else {
       // Create mock wallet only if no real wallet connected
       const mockAddress = `0x${[...Array(4)].map(() => Math.floor(Math.random() * 16).toString(16)).join('')}...${[...Array(4)].map(() => Math.floor(Math.random() * 16).toString(16)).join('')}`;
       setWalletAddress(mockAddress.replace('0x', '0xA3...').slice(0, 10) + 'F1B');
-      setWalletBalance(0.42);
+      // Note: Balance will be 0 for mock wallets, real balance comes from wagmi in context
       setWalletConnected(true);
     }
     onOpenChange(false);
