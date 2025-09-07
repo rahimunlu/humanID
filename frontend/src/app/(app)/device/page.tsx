@@ -3,18 +3,20 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, CheckCircle2, XCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAppContext } from '@/lib/context';
 import PairingModal from './_components/pairing-modal';
-import { Logo } from '@/components/logo';
+import { useToast } from '@/hooks/use-toast';
 
 export default function DevicePage() {
   const { walletConnected, deviceConnected, setDeviceConnected } = useAppContext();
   const [isPairingModalOpen, setPairingModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { toast } = useToast();
 
   useEffect(() => {
     // Redirect if wallet is not connected, protecting the route.
@@ -22,6 +24,21 @@ export default function DevicePage() {
       router.push('/wallet');
     }
   }, [walletConnected, router]);
+
+  const handlePairDevice = () => {
+    setIsLoading(true);
+    setPairingModalOpen(true);
+    // Reset loading state when modal closes
+    setTimeout(() => setIsLoading(false), 100);
+  };
+
+  const handleDeviceConnected = () => {
+    setDeviceConnected(true);
+    toast({
+      title: "Device Connected Successfully",
+      description: "Your humanID DNA device is now ready for verification.",
+    });
+  };
 
   return (
     <div className="p-4 md:p-6 min-h-full flex flex-col">
@@ -45,7 +62,7 @@ export default function DevicePage() {
                 <div className="flex flex-col items-center text-center gap-2 text-green-600">
                   <CheckCircle2 className="h-16 w-16" />
                   <p className="font-semibold">Device Connected</p>
-                  <Badge variant="secondary" className="bg-green-100 text-green-800">humanID DNA v0.9</Badge>
+                  <Badge className="bg-green-100 text-green-800">humanID DNA v0.9</Badge>
                 </div>
               ) : (
                 <div className="flex flex-col items-center text-center gap-2 text-muted-foreground">
@@ -55,8 +72,20 @@ export default function DevicePage() {
               )}
               
               {!deviceConnected && (
-                <Button size="lg" className="w-full transition-transform active:scale-95" onClick={() => setPairingModalOpen(true)}>
-                  Pair Device
+                <Button 
+                  size="lg" 
+                  className="w-full transition-transform active:scale-95" 
+                  onClick={handlePairDevice}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      Pairing...
+                    </>
+                  ) : (
+                    'Pair Device'
+                  )}
                 </Button>
               )}
             </CardContent>
@@ -74,7 +103,11 @@ export default function DevicePage() {
         </div>
       </div>
       
-      <PairingModal isOpen={isPairingModalOpen} onOpenChange={setPairingModalOpen} />
+      <PairingModal 
+        isOpen={isPairingModalOpen} 
+        onOpenChange={setPairingModalOpen}
+        onDeviceConnected={handleDeviceConnected}
+      />
     </div>
   );
 }
