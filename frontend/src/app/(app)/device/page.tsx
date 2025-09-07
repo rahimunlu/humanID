@@ -11,6 +11,7 @@ import { useAppContext } from '@/lib/context';
 import PairingModal from './_components/pairing-modal';
 import { Logo } from '@/components/logo';
 import { dnaSequencingService, DNASequencingRequest, SequencingStatus } from '@/lib/dna-sequencing';
+import { useToast } from '@/hooks/use-toast';
 
 export default function DevicePage() {
   const { walletConnected, deviceConnected, setDeviceConnected, walletAddress } = useAppContext();
@@ -19,6 +20,7 @@ export default function DevicePage() {
   const [sequencingStatus, setSequencingStatus] = useState<SequencingStatus | null>(null);
   const [sequencingError, setSequencingError] = useState<string | null>(null);
   const router = useRouter();
+  const { toast } = useToast();
 
   useEffect(() => {
     // Redirect if wallet is not connected, protecting the route.
@@ -27,19 +29,49 @@ export default function DevicePage() {
     }
   }, [walletConnected, router]);
 
+  const handlePairDevice = () => {
+    toast({
+      title: "Pairing Device",
+      description: "Opening device pairing modal...",
+    });
+    setPairingModalOpen(true);
+  };
+
+  const handleDeviceConnected = () => {
+    setDeviceConnected(true);
+    toast({
+      title: "Device Connected Successfully",
+      description: "Your humanID DNA device is now ready for verification.",
+    });
+  };
+
   const handleStartDNAVerification = async () => {
     if (!walletAddress) {
-      setSequencingError("Wallet address is required to start DNA verification");
+      toast({
+        title: "Wallet Required",
+        description: "Wallet address is required to start DNA verification",
+        variant: "destructive"
+      });
       return;
     }
 
     if (!deviceConnected) {
-      setSequencingError("Device must be connected to start DNA verification");
+      toast({
+        title: "Device Required",
+        description: "Device must be connected to start DNA verification",
+        variant: "destructive"
+      });
       return;
     }
 
     setIsSequencingLoading(true);
     setSequencingError(null);
+
+    // Show initial toast
+    toast({
+      title: "Starting DNA Analysis",
+      description: "Initializing DNA sequencing process...",
+    });
 
     try {
       const request: DNASequencingRequest = {
@@ -52,17 +84,32 @@ export default function DevicePage() {
       const result = await dnaSequencingService.startSequencing(request);
       
       if (result.success) {
+        toast({
+          title: "DNA Analysis Started",
+          description: "Your DNA sample is being processed. This may take a few minutes.",
+        });
+
         // Start polling for status updates
         const stopPolling = await dnaSequencingService.pollStatus(
           walletAddress,
           (newStatus) => {
             setSequencingStatus(newStatus);
             
-            // If completed successfully, navigate to verify page
+            // Show status-specific toasts
             if (newStatus.status === 'completed') {
+              toast({
+                title: "DNA Analysis Complete!",
+                description: "Your DNA verification has been completed successfully.",
+              });
               setTimeout(() => {
                 router.push('/verify');
               }, 2000); // Wait 2 seconds to show completion status
+            } else if (newStatus.status === 'failed') {
+              toast({
+                title: "DNA Analysis Failed",
+                description: newStatus.message || "DNA analysis encountered an error",
+                variant: "destructive"
+              });
             }
           }
         );
@@ -70,10 +117,21 @@ export default function DevicePage() {
         // Store stop function for cleanup if needed
         (window as any).stopDNASequencingPolling = stopPolling;
       } else {
+        toast({
+          title: "Failed to Start DNA Analysis",
+          description: result.message || "Unable to start DNA sequencing",
+          variant: "destructive"
+        });
         setSequencingError(result.message);
       }
     } catch (err) {
-      setSequencingError(err instanceof Error ? err.message : 'Unknown error occurred');
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      toast({
+        title: "DNA Analysis Error",
+        description: errorMessage,
+        variant: "destructive"
+      });
+      setSequencingError(errorMessage);
     } finally {
       setIsSequencingLoading(false);
     }
@@ -135,7 +193,7 @@ export default function DevicePage() {
                 <div className="flex flex-col items-center text-center gap-2 text-green-600">
                   <CheckCircle2 className="h-16 w-16" />
                   <p className="font-semibold">Device Connected</p>
-                  <Badge variant="secondary" className="bg-green-100 text-green-800">humanID DNA v0.9</Badge>
+                  <Badge className="bg-green-100 text-green-800">humanID DNA v0.9</Badge>
                 </div>
               ) : (
                 <div className="flex flex-col items-center text-center gap-2 text-muted-foreground">
@@ -145,7 +203,7 @@ export default function DevicePage() {
               )}
               
               {!deviceConnected && (
-                <Button size="lg" className="w-full transition-transform active:scale-95" onClick={() => setPairingModalOpen(true)}>
+                <Button size="lg" className="w-full transition-transform active:scale-95" onClick={handlePairDevice}>
                   Pair Device
                 </Button>
               )}
@@ -232,7 +290,11 @@ export default function DevicePage() {
         </div>
       </div>
       
-      <PairingModal isOpen={isPairingModalOpen} onOpenChange={setPairingModalOpen} />
+      <PairingModal 
+        isOpen={isPairingModalOpen} 
+        onOpenChange={setPairingModalOpen}
+        onDeviceConnected={handleDeviceConnected}
+      />
     </div>
   );
 }

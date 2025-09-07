@@ -10,11 +10,12 @@ import { useToast } from "@/hooks/use-toast";
 type Props = {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
+  onDeviceConnected?: () => void;
 };
 
 type PairingStatus = 'idle' | 'searching' | 'found' | 'connecting' | 'connected';
 
-export default function PairingModal({ isOpen, onOpenChange }: Props) {
+export default function PairingModal({ isOpen, onOpenChange, onDeviceConnected }: Props) {
   const { setDeviceConnected } = useAppContext();
   const [status, setStatus] = useState<PairingStatus>('idle');
   const { toast } = useToast();
@@ -34,6 +35,7 @@ export default function PairingModal({ isOpen, onOpenChange }: Props) {
     const connectTimer = setTimeout(() => {
       setStatus('connected');
       setDeviceConnected(true);
+      onDeviceConnected?.(); // Call the callback if provided
       toast({
         title: "Device Paired Successfully",
         description: "humanID DNA v0.9 is now connected.",
