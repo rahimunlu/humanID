@@ -89,24 +89,24 @@ try:
             if event_type == "humanity_verification":
                 entity_key = await store_humanity_verification(data)
                 logger.info(f"✅ Humanity verification stored in Golem DB with entity key: {entity_key}")
-                return True
+                return entity_key
             elif event_type == "similarity_check":
                 entity_key = await store_similarity_check(data)
                 logger.info(f"✅ Similarity check stored in Golem DB with entity key: {entity_key}")
-                return True
+                return entity_key
             else:
                 logger.error(f"Unknown event type: {event_type}")
-                return False
+                return None
         except Exception as e:
             logger.error(f"❌ Failed to notify Golem DB: {e}")
-            return False
+            return None
             
 except ImportError as e:
     logger.warning(f"Failed to import golem_endpoints: {e}")
     async def notify_golem(event_type, data):
         logger.info(f"📡 Mock GolemDB notification: {event_type}")
         logger.info(f"   Data: {data}")
-        return True
+        return "mock_entity_key_12345"
 
 def allowed_file(filename: str) -> bool:
     """Check if file extension is allowed"""
@@ -307,9 +307,15 @@ async def first_humanity_verification(
             'verification_type': 'first_humanity_verification'
         }
         
-        golemdb_success = await notify_golem('humanity_verification', golemdb_data)
-        if golemdb_success:
-            logger.info(f"   ✅ GolemDB notification sent successfully")
+        golemdb_entity_key = await notify_golem('humanity_verification', golemdb_data)
+        if golemdb_entity_key:
+            logger.info(f"   ✅ GolemDB notification sent successfully with entity key: {golemdb_entity_key}")
+            # Update metadata with entity key
+            metadata['golem_entity_key'] = golemdb_entity_key
+            # Re-save metadata with entity key
+            with open(metadata_path, 'w') as f:
+                json.dump(metadata, f, indent=2)
+            logger.info(f"   📋 Metadata updated with Golem entity key")
         else:
             logger.warning(f"   ⚠️  GolemDB notification failed")
         
@@ -342,7 +348,8 @@ async def first_humanity_verification(
                 'file_hash': file_hash,
                 'timestamp': metadata['timestamp']
             },
-            'golemdb_notified': golemdb_success
+            'golemdb_notified': golemdb_entity_key is not None,
+            'golem_entity_key': golemdb_entity_key
         }
         
     except HTTPException:
@@ -480,9 +487,9 @@ async def similarity_check(
             'check_type': 'similarity_check'
         }
         
-        golemdb_success = await notify_golem('similarity_check', golemdb_data)
-        if golemdb_success:
-            logger.info(f"   ✅ GolemDB notification sent successfully")
+        golemdb_entity_key = await notify_golem('similarity_check', golemdb_data)
+        if golemdb_entity_key:
+            logger.info(f"   ✅ GolemDB notification sent successfully with entity key: {golemdb_entity_key}")
         else:
             logger.warning(f"   ⚠️  GolemDB notification failed")
         
@@ -512,7 +519,8 @@ async def similarity_check(
             'similarity_result': similarity_result,
             'probability_score': probability_score,
             'stored_verification_id': stored_verification_id,
-            'golemdb_notified': golemdb_success
+            'golemdb_notified': golemdb_entity_key is not None,
+            'golem_entity_key': golemdb_entity_key
         }
         
     except HTTPException:
@@ -547,6 +555,7 @@ async def get_verification_status(user_id: str):
                                 'external_kyc_document_id': metadata.get('external_kyc_document_id'),
                                 'humanity_score': metadata.get('humanity_score'),
                                 'timestamp': metadata.get('timestamp'),
+                                'golem_entity_key': metadata.get('golem_entity_key'),
                                 'similarity_result': None,
                                 'probability_score': None
                             })

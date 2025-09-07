@@ -1,0 +1,15 @@
+[Unit]
+Description=Genome Device Server
+After=network.target
+
+[Service]
+Type=simple
+User=ethereum
+WorkingDirectory=/home/ethereum/genome_device
+Environment=PATH=/home/ethereum/genome_device/venv/bin
+ExecStart=/home/ethereum/genome_device/venv/bin/python -c "import uvicorn; uvicorn.run('server:app', host='0.0.0.0', port=8002, ssl_keyfile='key.pem', ssl_certfile='cert.pem')"
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

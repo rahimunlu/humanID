@@ -1,0 +1,103 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: genome-device
+  name: genome-device
+  namespace: ethwarsaw
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: genome-device
+  template:
+    metadata:
+      labels:
+        app: genome-device
+    spec:
+      containers:
+      - image: docker.io/maxkokocom/genome-device:latest
+        imagePullPolicy: Always
+        name: genome-device
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: genome-device-ingress
+  namespace: ethwarsaw
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod-cloudflare"
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+spec:
+  tls:
+    - hosts:
+        - genome-device.biokami.com
+        - www.genome-device.biokami.com
+      secretName: genome-device-biokami-com
+  rules:
+    - host: www.genome-device.biokami.com
+      http:
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: genome-device
+              port:
+                number: 8000
+    - host: genome-device.biokami.com
+      http:
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: genome-device
+              port:
+                number: 8000
+  ingressClassName: nginx
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: genome-device
+  name: genome-device
+  namespace: ethwarsaw
+spec:
+  ports:
+  - port: 8000
+    protocol: TCP
+    targetPort: 8000
+  selector:
+    app: genome-device
+  sessionAffinity: None
+  type: ClusterIP
+status:
+  loadBalancer: {}
