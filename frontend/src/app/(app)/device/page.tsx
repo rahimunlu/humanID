@@ -76,9 +76,9 @@ export default function DevicePage() {
     try {
       const request: DNASequencingRequest = {
         user_id: walletAddress,
-        custodian: "HumanID Custodian",
-        custodian_endpoint: "https://custodian.humanid.com/verify",
-        expiry_time: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
+        custodian: "biokami_labs",
+        custodian_endpoint: "https://biometrics-server.biokami.com",
+        expiry_time: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 year from now
       };
 
       const result = await dnaSequencingService.startSequencing(request);
@@ -216,9 +216,9 @@ export default function DevicePage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <span>{getSequencingStatusIcon()}</span>
-                  DNA Sequencing Status
+                  DNA Sequencing
                 </CardTitle>
-                <CardDescription>Real-time status of your DNA verification process</CardDescription>
+                <CardDescription>Start DNA analysis and verification process</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-2">
@@ -235,10 +235,28 @@ export default function DevicePage() {
                     Result file: {sequencingStatus.result_file}
                   </p>
                 )}
-                <div className="text-xs text-muted-foreground space-y-1">
-                  <p><strong>User ID:</strong> {sequencingStatus.user_id}</p>
-                  <p><strong>Timestamp:</strong> {new Date(sequencingStatus.timestamp).toLocaleString()}</p>
-                </div>
+                
+                {sequencingStatus.status === 'completed' && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-green-600">
+                      <span>✅</span>
+                      <span className="font-medium">Completed</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground space-y-1 bg-gray-50 p-3 rounded-md">
+                      <p><strong>User ID:</strong> {sequencingStatus.user_id}</p>
+                      <p><strong>Custodian:</strong> biokami_labs</p>
+                      <p><strong>Endpoint:</strong> https://biometrics-server.biokami.com</p>
+                      <p><strong>Expiry:</strong> {new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()}</p>
+                    </div>
+                  </div>
+                )}
+                
+                {sequencingStatus.status !== 'completed' && (
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <p><strong>User ID:</strong> {sequencingStatus.user_id}</p>
+                    <p><strong>Timestamp:</strong> {new Date(sequencingStatus.timestamp).toLocaleString()}</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
