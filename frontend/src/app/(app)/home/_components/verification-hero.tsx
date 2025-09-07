@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useAccount } from 'wagmi';
-import { GolemBaseClient, GenericBytes } from 'golem-base-sdk';
 
 interface VerificationData {
   verification_id: string;
@@ -36,109 +35,42 @@ export function VerificationHero() {
   const [isLoading, setIsLoading] = useState(false);
 
   const fetchLatestVerification = async () => {
-    console.log('🔥 DIRECT GOLEM DB FETCH FUNCTION CALLED - NO API CALLS!');
+    console.log('🔥 FETCHING FROM BACKEND API - TESTING APPROACH!');
     setIsLoading(true);
     try {
       // Use connected wallet address, fallback to hardcoded for testing
       const targetUserId = address || '0x1bc868c8C92B7fD35900f6d687067748ADbd8571';
       
-      console.log('🔍 Connecting directly to Golem DB for user:', targetUserId);
+      console.log('🔍 Calling backend API for user:', targetUserId);
       
-      // Connect directly to Golem DB
-      const GOLEM_DB_RPC = "https://ethwarsaw.holesky.golemdb.io/rpc";
-      const GOLEM_DB_WSS = "wss://ethwarsaw.holesky.golemdb.io/rpc/ws";
-      const PRIVATE_KEY = process.env.NEXT_PUBLIC_PRIVATE_KEY || "0x4f3edf983ac636a65a842ce7c78d9aa706d3b113bce9c46f30d7d21715b23b1d"; // Default for testing
+      // Use environment variable for API URL, fallback to localhost for local development
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8001';
+      console.log('🌐 API Base URL:', API_BASE_URL);
       
-      if (!PRIVATE_KEY) {
-        throw new Error('Private key not configured for Golem DB connection');
+      const response = await fetch(`${API_BASE_URL}/api/v1/verification-by-user/${targetUserId}`);
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status} - ${response.statusText}`);
       }
       
-      // Create Golem DB client
-      const client = await GolemBaseClient.create_rw_client(
-        GOLEM_DB_RPC,
-        GOLEM_DB_WSS,
-        PRIVATE_KEY
-      );
+      const data = await response.json();
+      console.log('✅ Backend API response:', data);
       
-      console.log('✅ Connected to Golem DB, searching for user_id:', targetUserId);
-      
-      // Get account address (our writer address)
-      const writerAddress = client.get_account_address();
-      console.log('📝 Writer address:', writerAddress);
-      
-      // Get all entities owned by this account
-      const entityKeys = await client.get_entities_of_owner(writerAddress);
-      console.log(`🔍 Found ${entityKeys.length} entities owned by writer`);
-      
-      let latestVerification: any = null;
-      let latestTimestamp: string | null = null;
-      
-      // Search through all entities for matching user_id
-      for (const entityKey of entityKeys) {
-        try {
-          // Get metadata to check annotations
-          const metadata = await client.get_entity_metadata(entityKey);
-          
-          // Check if this entity matches our user_id and is a humanity verification
-          let isTargetUser = false;
-          let isHumanityVerification = false;
-          let entityTimestamp: string | null = null;
-          
-          for (const annotation of metadata.string_annotations) {
-            if (annotation.key === "user_id" && annotation.value === targetUserId) {
-              isTargetUser = true;
-            } else if (annotation.key === "recordType" && annotation.value === "humanity_verification") {
-              isHumanityVerification = true;
-            } else if (annotation.key === "timestamp") {
-              entityTimestamp = annotation.value;
-            }
-          }
-          
-          // If this matches our criteria and is newer than current latest
-          if (isTargetUser && isHumanityVerification && entityTimestamp) {
-            if (!latestTimestamp || entityTimestamp > latestTimestamp) {
-              console.log(`📅 Found newer verification: ${entityTimestamp}`);
-              
-              // Get the full entity data
-              const entityKeyHex = entityKey.as_hex_string();
-              const storageValue = await client.get_storage_value(GenericBytes.from_hex_string(entityKeyHex));
-              
-              if (storageValue) {
-                // Decode the JSON data
-                const entityData = JSON.parse(storageValue.toString());
-                
-                // Collect all annotations
-                const annotations: { [key: string]: string } = {};
-                for (const annotation of metadata.string_annotations) {
-                  annotations[annotation.key] = annotation.value;
-                }
-                
-                // Update latest verification
-                latestVerification = {
-                  ...entityData,
-                  entity_key: entityKeyHex,
-                  annotations: annotations,
-                  source: 'golem_db_direct'
-                };
-                latestTimestamp = entityTimestamp;
-              }
-            }
-          }
-        } catch (error) {
-          console.warn(`⚠️ Error processing entity ${entityKey.as_hex_string()}:`, error);
-          continue;
-        }
-      }
-      
-      if (latestVerification) {
-        console.log('✅ Found latest verification:', latestVerification);
-        setVerificationData(latestVerification);
+      if (data.status === 'success' && data.verification) {
+        setVerificationData(data.verification);
+        console.log('✅ Successfully loaded verification data');
+        console.log('📊 Verification details:');
+        console.log('  Entity Key:', data.verification.entity_key);
+        console.log('  User ID:', data.verification.user_id);
+        console.log('  Humanity Score:', data.verification.humanity_score);
+        console.log('  Timestamp:', data.verification.timestamp);
+        console.log('  Source:', data.verification.source);
       } else {
-        throw new Error(`No verification found for user ${targetUserId}`);
+        throw new Error('Invalid response format from API');
       }
       
     } catch (error) {
-      console.error('❌ Error fetching verification from Golem DB:', error);
+      console.error('❌ Error fetching verification:', error);
       toast({
         title: "Error",
         description: `Failed to fetch verification data: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -190,14 +122,14 @@ export function VerificationHero() {
       <Dialog open={isProofModalOpen} onOpenChange={setProofModalOpen}>
         <DialogContent className="max-w-2xl">
             <DialogHeader>
-                <DialogTitle>🔗 Direct Golem DB Verification</DialogTitle>
-                <DialogDescription>Real-time data: Connected directly to Golem DB blockchain, searching by user_id annotation for latest verification with full metadata</DialogDescription>
+                <DialogTitle>🔗 Golem DB Verification</DialogTitle>
+                <DialogDescription>Real-time data: Fetched from Golem DB via backend API, showing latest verification with full blockchain metadata and annotations</DialogDescription>
             </DialogHeader>
             <div className="py-4 space-y-4">
               {isLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-8 w-8 animate-spin" />
-                  <span className="ml-2">Connecting directly to Golem DB blockchain...</span>
+                  <span className="ml-2">Fetching verification data from Golem DB...</span>
                 </div>
               ) : verificationData ? (
                 <>

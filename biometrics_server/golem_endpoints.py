@@ -350,6 +350,106 @@ async def fetch_all_verifications() -> list[dict]:
     verifications.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
     return verifications
 
+# ========= MAIN FETCH FUNCTION (like notify_golem) =========
+def fetch_golem_verification(user_id: str) -> Optional[Dict[str, Any]]:
+    """
+    Main function to fetch verification from Golem DB - similar pattern to notify_golem
+    This function searches for user_id annotation and returns the latest verification
+    """
+    try:
+        import threading
+        import concurrent.futures
+        
+        def run_async_in_thread():
+            """Run async function in a separate thread with proper event loop handling"""
+            # Create a new event loop for this thread
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            try:
+                return loop.run_until_complete(fetch_verification_by_user_id(user_id))
+            finally:
+                loop.close()
+        
+        # Run the async function in a separate thread to avoid signal issues
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(run_async_in_thread)
+            verification_data = future.result(timeout=30)  # 30 second timeout
+            
+            if verification_data:
+                print(f"✅ Verification found for user {user_id}")
+                return verification_data
+            else:
+                print(f"❌ No verification found for user {user_id}")
+                return None
+            
+    except Exception as e:
+        print(f"❌ Failed to fetch from Golem DB: {e}")
+        return None
+
+async def fetch_verification_by_user_id(user_id: str) -> Optional[Dict[str, Any]]:
+    """Fetch verification from Golem DB by searching for user_id annotation"""
+    client = await get_golem_client()
+    
+    # Get account address (our writer address)
+    writer_address = client.get_account_address()
+    
+    # Get all entities owned by this account
+    entity_keys = await client.get_entities_of_owner(writer_address)
+    
+    latest_verification = None
+    latest_timestamp = None
+    
+    # Search through all entities for matching user_id
+    for entity_key in entity_keys:
+        try:
+            # Get metadata to check annotations
+            metadata = await client.get_entity_metadata(entity_key)
+            
+            # Check if this entity matches our user_id and is a humanity verification
+            is_target_user = False
+            is_humanity_verification = False
+            entity_timestamp = None
+            
+            for annotation in metadata.string_annotations:
+                if annotation.key == "user_id" and annotation.value == user_id:
+                    is_target_user = True
+                elif annotation.key == "recordType" and annotation.value == "humanity_verification":
+                    is_humanity_verification = True
+                elif annotation.key == "timestamp":
+                    entity_timestamp = annotation.value
+            
+            # If this matches our criteria and is newer than current latest
+            if is_target_user and is_humanity_verification and entity_timestamp:
+                if not latest_timestamp or entity_timestamp > latest_timestamp:
+                    # Get the full entity data
+                    entity_key_hex = entity_key.as_hex_string()
+                    storage_value = await client.get_storage_value(GenericBytes.from_hex_string(entity_key_hex))
+                    
+                    if storage_value:
+                        # Decode the JSON data
+                        entity_data = json.loads(storage_value.decode('utf-8'))
+                        
+                        # Collect all annotations
+                        annotations = {}
+                        for annotation in metadata.string_annotations:
+                            annotations[annotation.key] = annotation.value
+                        
+                        # Update latest verification
+                        latest_verification = {
+                            **entity_data,
+                            'entity_key': entity_key_hex,
+                            'annotations': annotations,
+                            'source': 'golem_db_direct'
+                        }
+                        latest_timestamp = entity_timestamp
+                        
+        except Exception as error:
+            logger.warning(f"⚠️ Error processing entity {entity_key.as_hex_string()}: {error}")
+            continue
+    
+    return latest_verification
+
 # ========= SYNCHRONOUS WRAPPER FUNCTIONS =========
 def fetch_latest_verification_sync() -> Optional[dict]:
     """
