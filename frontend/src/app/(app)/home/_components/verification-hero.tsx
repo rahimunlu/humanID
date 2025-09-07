@@ -33,13 +33,16 @@ export function VerificationHero() {
   const fetchLatestVerification = async () => {
     setIsLoading(true);
     try {
-      // Call the real API endpoint to fetch latest verification from Golem DB
-      const response = await fetch('http://localhost:8001/api/v1/latest-verification');
+      // Target user ID from the biometrics server
+      const targetUserId = '0x1bc868c8C92B7fD35900f6d687067748ADbd8571';
+      
+      // Call the new API endpoint that fetches from biometrics server first, then Golem DB
+      const response = await fetch(`http://localhost:8001/api/v1/verification-by-user/${targetUserId}`);
       if (response.ok) {
         const data = await response.json();
         if (data.status === 'success' && data.verification) {
           setVerificationData(data.verification);
-          console.log('✅ Fetched real Golem DB data:', data.verification);
+          console.log('✅ Fetched verification data via biometrics server + Golem DB:', data.verification);
         } else {
           throw new Error('No verification data in response');
         }
@@ -47,10 +50,10 @@ export function VerificationHero() {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
     } catch (error) {
-      console.error('❌ Error fetching verification from Golem DB:', error);
+      console.error('❌ Error fetching verification:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch verification data from Golem DB",
+        description: "Failed to fetch verification data",
         variant: "destructive"
       });
       setVerificationData(null);
@@ -99,14 +102,14 @@ export function VerificationHero() {
       <Dialog open={isProofModalOpen} onOpenChange={setProofModalOpen}>
         <DialogContent className="max-w-2xl">
             <DialogHeader>
-                <DialogTitle>🔗 Live Golem DB Verification</DialogTitle>
-                <DialogDescription>Real-time data fetched from Golem DB blockchain - latest verification by timestamp</DialogDescription>
+                <DialogTitle>🔗 Live Biometrics + Golem DB Verification</DialogTitle>
+                <DialogDescription>Real-time data: Latest verification from biometrics server, with full annotations from Golem DB blockchain</DialogDescription>
             </DialogHeader>
             <div className="py-4 space-y-4">
               {isLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-8 w-8 animate-spin" />
-                  <span className="ml-2">Fetching latest verification from Golem DB...</span>
+                  <span className="ml-2">Fetching latest verification from biometrics server + Golem DB...</span>
                 </div>
               ) : verificationData ? (
                 <>
