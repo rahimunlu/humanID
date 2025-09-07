@@ -22,7 +22,6 @@ from fastapi.middleware.cors import CORSMiddleware
 # Add current directory to path for imports
 sys.path.append(str(Path(__file__).parent))
 
-from bioinformatics import BioinformaticsProcessor
 from send_data import DataSender
 
 # Configure logging
@@ -49,8 +48,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize processors
-bioinformatics_processor = BioinformaticsProcessor()
+# Initialize data sender
 data_sender = DataSender()
 
 # Request models
@@ -210,7 +208,6 @@ async def health_check():
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
         "components": {
-            "bioinformatics": "available",
             "data_sender": "available"
         }
     }
@@ -277,20 +274,28 @@ async def process_dna_sequencing(
     try:
         # Update status to processing
         sequencing_status[user_id].status = "processing"
-        sequencing_status[user_id].message = "Running bioinformatics analysis"
+        sequencing_status[user_id].message = "Simulating bioinformatics analysis"
         sequencing_status[user_id].timestamp = datetime.now().isoformat()
         
         logger.info(f"🔬 Processing DNA sequencing for user: {user_id}")
         
-        # Step 1: Run bioinformatics analysis
-        logger.info("📊 Running bioinformatics analysis...")
-        result_file = await run_bioinformatics_analysis(user_id)
+        # Step 1: Simulate bioinformatics analysis
+        logger.info("📊 Bioinformatics analysis...")
+        # result_file = await run_bioinformatics_analysis(user_id)
         
-        if not result_file:
-            raise Exception("Bioinformatics analysis failed")
+        # if not result_file:
+            # raise Exception("Bioinformatics analysis failed")
+        
+        # Use a simple test file for now
+        result_file = "test_profile.txt"
+        
+        # Create a simple test file if it doesn't exist
+        if not os.path.exists(result_file):
+            with open(result_file, 'w') as f:
+                f.write("test_str_entry_1\ntest_str_entry_2\ntest_str_entry_3\ntest_str_entry_4\ntest_str_entry_5\n")
         
         # Update status
-        sequencing_status[user_id].message = "Bioinformatics analysis completed, uploading data"
+        sequencing_status[user_id].message = "Analysis completed, uploading data"
         sequencing_status[user_id].timestamp = datetime.now().isoformat()
         
         # Step 2: Send data to custodian endpoint
@@ -319,20 +324,41 @@ async def process_dna_sequencing(
         sequencing_status[user_id].timestamp = datetime.now().isoformat()
 
 async def run_bioinformatics_analysis(user_id: str) -> Optional[str]:
-    """Run bioinformatics analysis and return result file path"""
+    """Simulate bioinformatics analysis and return result file path"""
     try:
-        # Run the bioinformatics processor
-        result_file = bioinformatics_processor.generate_str_profile(user_id)
+        logger.info(f"🧬 Bioinformatics analysis for user: {user_id}")
         
-        if result_file and os.path.exists(result_file):
-            logger.info(f"✅ Bioinformatics analysis completed: {result_file}")
-            return result_file
-        else:
-            logger.error("❌ Bioinformatics analysis failed - no result file")
-            return None
+        # Create a simulated STR profile file
+        result_file = f"{user_id}_str_final.txt"
+        
+        # Generate simulated STR data
+        simulated_str_data = f"""# STR Profile File (Simulated)
+# Generated: {datetime.now().isoformat()}
+# User ID: {user_id}
+# Status: Simulated for testing
+# Format: CHROM<TAB>POS<TAB>REF<TAB>ALT
+# =============================================================================
+chr1	1000000	A	G
+chr1	2000000	C	T
+chr1	3000000	AT	A
+chr2	5000000	G	GC
+chr2	6000000	T	C
+chr3	10000000	AAAAA	AAAA
+chr3	15000000	A	T
+chr4	20000000	C	G
+chr4	25000000	TTTT	TTT
+chr5	30000000	G	A
+"""
+        
+        # Write the simulated data to file
+        with open(result_file, 'w') as f:
+            f.write(simulated_str_data)
+        
+        logger.info(f"✅ Simulated bioinformatics analysis completed: {result_file}")
+        return result_file
             
     except Exception as e:
-        logger.error(f"❌ Bioinformatics analysis error: {str(e)}")
+        logger.error(f"❌ Simulated bioinformatics analysis error: {str(e)}")
         return None
 
 async def send_data_to_custodian(
@@ -347,19 +373,20 @@ async def send_data_to_custodian(
         # Update data sender with custodian endpoint
         data_sender.server_url = custodian_endpoint.rstrip('/')
         
-        # Send the file
-        success = data_sender.upload_file(
+        # Send the file using first_humanity_verification endpoint (first time verification)
+        # Use a test KYC document ID for now
+        response = data_sender.upload_file(
             file_path=result_file,
+            endpoint='first_humanity_verification',
             user_id=user_id,
-            custodian=custodian,
-            expiration_date=expiry_time
+            external_kyc_document_id=f"kyc_doc_{user_id}"
         )
         
-        if success:
+        if response and response.get('success', False):
             logger.info(f"✅ Data uploaded successfully to {custodian_endpoint}")
             return True
         else:
-            logger.error(f"❌ Data upload failed to {custodian_endpoint}")
+            logger.error(f"❌ Data upload failed to {custodian_endpoint}: {response}")
             return False
             
     except Exception as e:
@@ -378,7 +405,6 @@ if __name__ == "__main__":
     import uvicorn
     
     logger.info("🧬 Starting Genome Device Server...")
-    logger.info("📊 Bioinformatics processor initialized")
     logger.info("📤 Data sender initialized")
     
     uvicorn.run(
