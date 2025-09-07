@@ -22,14 +22,11 @@ export default function ConnectWalletModal({ isOpen, onOpenChange }: Props) {
   // Update app context when wallet connects
   React.useEffect(() => {
     if (isConnected && address) {
-      setWalletAddress(address);
-      setWalletConnected(true);
-      if (balance) {
-        setWalletBalance(parseFloat(balance.formatted));
-      }
+      // Note: walletAddress, walletConnected, and walletBalance are now automatically 
+      // updated by the AppProvider context using wagmi hooks
       onOpenChange(false);
     }
-  }, [isConnected, address, balance, setWalletAddress, setWalletConnected, setWalletBalance, onOpenChange]);
+  }, [isConnected, address, onOpenChange]);
 
   const handleConnect = (connector: any) => {
     connect({ connector });
