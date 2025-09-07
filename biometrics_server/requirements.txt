@@ -5,5 +5,4 @@ cryptography==41.0.7
 requests==2.31.0
 python-dotenv==1.0.0
 colorama==0.4.6
-golem-base-sdk==0.0.7
-httpx==0.28.1
+golem-base-sdk==1.0.0

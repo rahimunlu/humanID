@@ -39,17 +39,26 @@ async def get_golem_client() -> GolemBaseClient:
         if not PRIVATE_KEY:
             raise ValueError("PRIVATE_KEY environment variable is required")
         
-        golem_client = await GolemBaseClient.create_rw_client(
-            GOLEM_DB_RPC,
-            GOLEM_DB_WSS,
-            PRIVATE_KEY
-        )
+        try:
+            # Try the correct method for golem-base-sdk 1.0.0
+            golem_client = GolemBaseClient(
+                GOLEM_DB_RPC,
+                GOLEM_DB_WSS,
+                PRIVATE_KEY
+            )
+        except Exception as e:
+            logger.error(f"GolemBaseClient creation failed: {e}")
+            raise ValueError(f"Failed to create Golem DB client: {e}")
     return golem_client
 
 # ========= STORAGE HELPERS =========
 async def store_humanity_verification(verification_data: Dict[str, Any]) -> str:
     """Store humanity verification data in Golem DB"""
-    client = await get_golem_client()
+    try:
+        client = await get_golem_client()
+    except Exception as e:
+        logger.error(f"Failed to get Golem client: {e}")
+        raise RuntimeError(f"Failed to initialize Golem DB client: {e}")
     
     entity_data = {
         "schema": "humanity_verification_v1",
