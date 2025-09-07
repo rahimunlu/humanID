@@ -36,8 +36,8 @@ export function VerificationHero() {
       // Target user ID from the biometrics server
       const targetUserId = '0x1bc868c8C92B7fD35900f6d687067748ADbd8571';
       
-      // Call the new API endpoint that fetches from biometrics server first, then Golem DB
-      const response = await fetch(`http://localhost:8001/api/v1/verification-by-user/${targetUserId}`);
+      // Call the HumanID biometrics server endpoint that integrates with Golem DB
+      const response = await fetch(`http://localhost:5000/verification-with-golem/${targetUserId}`);
       if (response.ok) {
         const data = await response.json();
         if (data.status === 'success' && data.verification) {

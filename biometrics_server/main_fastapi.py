@@ -584,6 +584,71 @@ async def get_verification_status(user_id: str):
         logger.error(f"❌ Error getting verification status: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
+@app.get("/verification-with-golem/{user_id}")
+async def get_verification_with_golem_db(user_id: str):
+    """Get verification data by first fetching from local biometrics server, then from Golem DB"""
+    try:
+        import httpx
+        from golem_endpoints import fetch_verification_by_id
+        
+        logger.info(f"🔍 Fetching verification with Golem DB integration for user: {Fore.GREEN}{user_id}{Style.RESET_ALL}")
+        
+        # Step 1: Get verification data from local biometrics server
+        local_verification_data = await get_verification_status(user_id)
+        
+        if not local_verification_data.get("verifications") or len(local_verification_data["verifications"]) == 0:
+            raise HTTPException(status_code=404, detail=f"No verifications found for user {user_id}")
+        
+        # Get the latest verification (first one in the list, as they seem to be sorted by timestamp desc)
+        latest_verification = local_verification_data["verifications"][0]  # Most recent
+        verification_id = latest_verification["verification_id"]
+        
+        logger.info(f"   📋 Found latest verification: {Fore.CYAN}{verification_id}{Style.RESET_ALL}")
+        
+        # Step 2: Now fetch from Golem DB using the verification_id to find the entity_key
+        try:
+            verification_with_annotations = await fetch_verification_by_id(verification_id)
+            
+            if verification_with_annotations is not None:
+                logger.info(f"   ✅ Found verification in Golem DB with entity key: {Fore.GREEN}{verification_with_annotations.get('entity_key', 'N/A')}{Style.RESET_ALL}")
+                return {
+                    "status": "success",
+                    "verification": verification_with_annotations,
+                    "source": "golem_db",
+                    "biometrics_data": latest_verification
+                }
+            else:
+                logger.warning(f"   ⚠️  Verification {verification_id} not found in Golem DB, returning biometrics data")
+        except Exception as golem_error:
+            logger.warning(f"   ⚠️  Error fetching from Golem DB: {golem_error}")
+        
+        # Fallback: Return biometrics data with enhanced annotations
+        return {
+            "status": "success",
+            "verification": {
+                **latest_verification,
+                "source": "biometrics_server",
+                "total_verifications": local_verification_data.get("total_verifications", 0),
+                "annotations": {
+                    "user_id": user_id,
+                    "verification_id": verification_id,
+                    "humanity_score": str(latest_verification["humanity_score"]),
+                    "timestamp": latest_verification["timestamp"],
+                    "external_kyc_document_id": latest_verification["external_kyc_document_id"],
+                    "record_type": "humanity_verification",
+                    "source": "biometrics_server"
+                }
+            },
+            "source": "biometrics_server",
+            "biometrics_data": latest_verification
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error fetching verification with Golem DB for user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch verification for user {user_id}: {str(e)}")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=5000)
