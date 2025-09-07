@@ -586,78 +586,70 @@ async def get_verification_status(user_id: str):
 
 @app.get("/verification-with-golem/{user_id}")
 async def get_verification_with_golem_db(user_id: str):
-    """Get verification data by first fetching from biometrics server, then from Golem DB using entity_key"""
+    """Get verification data using local biometrics data enhanced with Golem DB annotations"""
     try:
-        import httpx
         from golem_endpoints import fetch_verification_by_entity_key
         
         logger.info(f"🔍 Fetching verification with Golem DB integration for user: {Fore.GREEN}{user_id}{Style.RESET_ALL}")
         
-        # Step 1: Get verification data from the deployed biometrics server
-        biometrics_url = f"https://biometrics-server.biokami.com/verification_status/{user_id}"
+        # Step 1: Get verification data from local biometrics server (this backend's own data)
+        local_verification_data = await get_verification_status(user_id)
         
-        async with httpx.AsyncClient() as client:
-            response = await client.get(biometrics_url)
-            if response.status_code != 200:
-                raise HTTPException(status_code=404, detail=f"User {user_id} not found in biometrics server")
-            
-            biometrics_data = response.json()
-            
-            # Get the latest verification (first one in the list)
-            if not biometrics_data.get("verifications") or len(biometrics_data["verifications"]) == 0:
-                raise HTTPException(status_code=404, detail=f"No verifications found for user {user_id}")
-            
-            latest_verification = biometrics_data["verifications"][0]  # Most recent
-            verification_id = latest_verification["verification_id"]
-            golem_entity_key = latest_verification.get("golem_entity_key")
-            
-            logger.info(f"   📋 Found latest verification: {Fore.CYAN}{verification_id}{Style.RESET_ALL}")
-            logger.info(f"   🔑 Golem entity key: {Fore.YELLOW}{golem_entity_key}{Style.RESET_ALL}")
+        if not local_verification_data.get("verifications") or len(local_verification_data["verifications"]) == 0:
+            raise HTTPException(status_code=404, detail=f"No verifications found for user {user_id}")
         
-        # Step 2: If we have a golem_entity_key, fetch full annotations from Golem DB
-        if golem_entity_key:
-            try:
-                verification_with_annotations = await fetch_verification_by_entity_key(golem_entity_key)
+        # Get the latest verification (first one in the list)
+        latest_verification = local_verification_data["verifications"][0]  # Most recent
+        verification_id = latest_verification["verification_id"]
+        
+        logger.info(f"   📋 Found latest verification: {Fore.CYAN}{verification_id}{Style.RESET_ALL}")
+        
+        # Step 2: Try to fetch from Golem DB using verification_id to find entity_key
+        try:
+            from golem_endpoints import fetch_latest_verification_by_timestamp
+            
+            # First try to get the verification with entity_key from Golem DB
+            verification_with_annotations = await fetch_latest_verification_by_timestamp()
+            
+            if verification_with_annotations is not None:
+                logger.info(f"   ✅ Found verification in Golem DB with entity key: {Fore.GREEN}{verification_with_annotations.get('entity_key', 'N/A')}{Style.RESET_ALL}")
                 
-                if verification_with_annotations is not None:
-                    logger.info(f"   ✅ Found verification in Golem DB with full annotations")
-                    return {
-                        "status": "success",
-                        "verification": {
-                            **verification_with_annotations,
-                            **latest_verification,  # Merge biometrics data
-                            "entity_key": golem_entity_key
-                        },
-                        "source": "golem_db",
-                        "biometrics_data": latest_verification
-                    }
-                else:
-                    logger.warning(f"   ⚠️  Entity key {golem_entity_key} not found in Golem DB")
-            except Exception as golem_error:
-                logger.warning(f"   ⚠️  Error fetching from Golem DB: {golem_error}")
+                # Merge local biometrics data with Golem DB annotations
+                return {
+                    "status": "success",
+                    "verification": {
+                        **verification_with_annotations,
+                        **latest_verification,  # Merge local biometrics data
+                        "entity_key": verification_with_annotations.get('entity_key')
+                    },
+                    "source": "golem_db",
+                    "local_biometrics_data": latest_verification
+                }
+            else:
+                logger.warning(f"   ⚠️  Verification not found in Golem DB")
+        except Exception as golem_error:
+            logger.warning(f"   ⚠️  Error fetching from Golem DB: {golem_error}")
         
-        # Fallback: Return biometrics data with enhanced annotations
-        logger.info(f"   📊 Returning biometrics server data with enhanced annotations")
+        # Fallback: Return local biometrics data with enhanced annotations
+        logger.info(f"   📊 Returning local biometrics server data with enhanced annotations")
         return {
             "status": "success",
             "verification": {
                 **latest_verification,
-                "entity_key": golem_entity_key,
-                "source": "biometrics_server",
-                "total_verifications": biometrics_data.get("total_verifications", 0),
+                "source": "local_biometrics_server",
+                "total_verifications": local_verification_data.get("total_verifications", 0),
                 "annotations": {
                     "user_id": user_id,
                     "verification_id": verification_id,
                     "humanity_score": str(latest_verification["humanity_score"]),
                     "timestamp": latest_verification["timestamp"],
                     "external_kyc_document_id": latest_verification["external_kyc_document_id"],
-                    "golem_entity_key": golem_entity_key or "N/A",
                     "record_type": "humanity_verification",
-                    "source": "biometrics_server"
+                    "source": "local_biometrics_server"
                 }
             },
-            "source": "biometrics_server",
-            "biometrics_data": latest_verification
+            "source": "local_biometrics_server",
+            "local_biometrics_data": latest_verification
         }
         
     except HTTPException:
