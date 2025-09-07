@@ -5,6 +5,8 @@ import { Share2, ShieldCheck, CheckCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { useAccount } from 'wagmi';
+import { GolemBaseClient, GenericBytes } from 'golem-base-sdk';
 
 interface VerificationData {
   verification_id: string;
@@ -26,6 +28,7 @@ interface VerificationData {
 
 export function VerificationHero() {
   const { toast } = useToast();
+  const { address } = useAccount();
   const [isProofModalOpen, setProofModalOpen] = useState(false);
   const [verificationData, setVerificationData] = useState<VerificationData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -33,35 +36,109 @@ export function VerificationHero() {
   const fetchLatestVerification = async () => {
     setIsLoading(true);
     try {
-      // Target user ID from the external biometrics server
-      const targetUserId = '0x1bc868c8C92B7fD35900f6d687067748ADbd8571';
+      // Use connected wallet address, fallback to hardcoded for testing
+      const targetUserId = address || '0x1bc868c8C92B7fD35900f6d687067748ADbd8571';
       
-      console.log('🔍 Fetching verification data via golem-endpoints service...');
+      console.log('🔍 Connecting directly to Golem DB for user:', targetUserId);
       
-      // Call our golem-endpoints service which handles the full flow:
-      // 1. Fetches from external biometrics server
-      // 2. Gets golem_entity_key from response
-      // 3. Fetches full verification data from Golem DB
-      const response = await fetch(`http://localhost:8001/api/v1/verification-by-user/${targetUserId}`);
+      // Connect directly to Golem DB
+      const GOLEM_DB_RPC = "https://ethwarsaw.holesky.golemdb.io/rpc";
+      const GOLEM_DB_WSS = "wss://ethwarsaw.holesky.golemdb.io/rpc/ws";
+      const PRIVATE_KEY = process.env.NEXT_PUBLIC_PRIVATE_KEY || "0x4f3edf983ac636a65a842ce7c78d9aa706d3b113bce9c46f30d7d21715b23b1d"; // Default for testing
       
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status} - ${response.statusText}`);
+      if (!PRIVATE_KEY) {
+        throw new Error('Private key not configured for Golem DB connection');
       }
       
-      const data = await response.json();
-      console.log('✅ Full verification data from golem-endpoints:', data);
+      // Create Golem DB client
+      const client = await GolemBaseClient.create_rw_client(
+        GOLEM_DB_RPC,
+        GOLEM_DB_WSS,
+        PRIVATE_KEY
+      );
       
-      if (data.status === 'success' && data.verification) {
-        setVerificationData(data.verification);
-        console.log('✅ Successfully loaded verification with Golem DB annotations');
+      console.log('✅ Connected to Golem DB, searching for user_id:', targetUserId);
+      
+      // Get account address (our writer address)
+      const writerAddress = client.get_account_address();
+      console.log('📝 Writer address:', writerAddress);
+      
+      // Get all entities owned by this account
+      const entityKeys = await client.get_entities_of_owner(writerAddress);
+      console.log(`🔍 Found ${entityKeys.length} entities owned by writer`);
+      
+      let latestVerification: any = null;
+      let latestTimestamp: string | null = null;
+      
+      // Search through all entities for matching user_id
+      for (const entityKey of entityKeys) {
+        try {
+          // Get metadata to check annotations
+          const metadata = await client.get_entity_metadata(entityKey);
+          
+          // Check if this entity matches our user_id and is a humanity verification
+          let isTargetUser = false;
+          let isHumanityVerification = false;
+          let entityTimestamp: string | null = null;
+          
+          for (const annotation of metadata.string_annotations) {
+            if (annotation.key === "user_id" && annotation.value === targetUserId) {
+              isTargetUser = true;
+            } else if (annotation.key === "recordType" && annotation.value === "humanity_verification") {
+              isHumanityVerification = true;
+            } else if (annotation.key === "timestamp") {
+              entityTimestamp = annotation.value;
+            }
+          }
+          
+          // If this matches our criteria and is newer than current latest
+          if (isTargetUser && isHumanityVerification && entityTimestamp) {
+            if (!latestTimestamp || entityTimestamp > latestTimestamp) {
+              console.log(`📅 Found newer verification: ${entityTimestamp}`);
+              
+              // Get the full entity data
+              const entityKeyHex = entityKey.as_hex_string();
+              const storageValue = await client.get_storage_value(GenericBytes.from_hex_string(entityKeyHex));
+              
+              if (storageValue) {
+                // Decode the JSON data
+                const entityData = JSON.parse(storageValue.toString());
+                
+                // Collect all annotations
+                const annotations: { [key: string]: string } = {};
+                for (const annotation of metadata.string_annotations) {
+                  annotations[annotation.key] = annotation.value;
+                }
+                
+                // Update latest verification
+                latestVerification = {
+                  ...entityData,
+                  entity_key: entityKeyHex,
+                  annotations: annotations,
+                  source: 'golem_db_direct'
+                };
+                latestTimestamp = entityTimestamp;
+              }
+            }
+          }
+        } catch (error) {
+          console.warn(`⚠️ Error processing entity ${entityKey.as_hex_string()}:`, error);
+          continue;
+        }
+      }
+      
+      if (latestVerification) {
+        console.log('✅ Found latest verification:', latestVerification);
+        setVerificationData(latestVerification);
       } else {
-        throw new Error('Invalid response format from verification API');
+        throw new Error(`No verification found for user ${targetUserId}`);
       }
+      
     } catch (error) {
-      console.error('❌ Error fetching verification:', error);
+      console.error('❌ Error fetching verification from Golem DB:', error);
       toast({
         title: "Error",
-        description: `Failed to fetch verification data: ${error.message}`,
+        description: `Failed to fetch verification data: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive"
       });
       setVerificationData(null);
@@ -72,7 +149,7 @@ export function VerificationHero() {
 
   useEffect(() => {
     fetchLatestVerification();
-  }, []);
+  }, [address]); // Refetch when wallet address changes
 
   const handleShare = () => {
     const mockLink = 'https://bio.chain/verify/maria.eth';
@@ -110,14 +187,14 @@ export function VerificationHero() {
       <Dialog open={isProofModalOpen} onOpenChange={setProofModalOpen}>
         <DialogContent className="max-w-2xl">
             <DialogHeader>
-                <DialogTitle>🔗 Live Biometrics + Golem DB Verification</DialogTitle>
-                <DialogDescription>Real-time data: Fetched from https://biometrics-server.biokami.com using golem_entity_key to retrieve full annotations from Golem DB blockchain</DialogDescription>
+                <DialogTitle>🔗 Direct Golem DB Verification</DialogTitle>
+                <DialogDescription>Real-time data: Connected directly to Golem DB blockchain, searching by user_id annotation for latest verification with full metadata</DialogDescription>
             </DialogHeader>
             <div className="py-4 space-y-4">
               {isLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-8 w-8 animate-spin" />
-                  <span className="ml-2">Fetching latest verification from biometrics server + Golem DB...</span>
+                  <span className="ml-2">Connecting directly to Golem DB blockchain...</span>
                 </div>
               ) : verificationData ? (
                 <>
@@ -236,7 +313,7 @@ export function VerificationHero() {
                         });
                       }}
                     >
-                      🔄 Refresh from Golem DB
+                      🔄 Refresh Direct from Golem DB
                     </Button>
                   </div>
                 </>
