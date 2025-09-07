@@ -35,30 +35,28 @@ export function VerificationHero() {
   const [isLoading, setIsLoading] = useState(false);
 
   const fetchLatestVerification = async () => {
-    console.log('🔥 FETCHING FROM BACKEND API - TESTING APPROACH!');
+    console.log('🔥 FETCHING FROM NEXT.JS API ROUTE - INTEGRATED SOLUTION!');
     setIsLoading(true);
     try {
       // Use connected wallet address, fallback to hardcoded for testing
       const targetUserId = address || '0x1bc868c8C92B7fD35900f6d687067748ADbd8571';
       
-      console.log('🔍 Calling backend API for user:', targetUserId);
+      console.log('🔍 Calling Next.js API route for user:', targetUserId);
       
-      // Use environment variable for API URL, fallback to localhost for local development
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8001';
-      console.log('🌐 API Base URL:', API_BASE_URL);
-      
-      const response = await fetch(`${API_BASE_URL}/api/v1/verification-by-user/${targetUserId}`);
+      // Call local Next.js API route - no external dependencies!
+      const response = await fetch(`/api/verification-by-user/${targetUserId}`);
       
       if (!response.ok) {
-        throw new Error(`API error: ${response.status} - ${response.statusText}`);
+        const errorText = await response.text();
+        throw new Error(`API error: ${response.status} - ${errorText}`);
       }
       
       const data = await response.json();
-      console.log('✅ Backend API response:', data);
+      console.log('✅ Next.js API response:', data);
       
       if (data.status === 'success' && data.verification) {
         setVerificationData(data.verification);
-        console.log('✅ Successfully loaded verification data');
+        console.log('✅ Successfully loaded verification data from integrated API');
         console.log('📊 Verification details:');
         console.log('  Entity Key:', data.verification.entity_key);
         console.log('  User ID:', data.verification.user_id);
@@ -123,7 +121,7 @@ export function VerificationHero() {
         <DialogContent className="max-w-2xl">
             <DialogHeader>
                 <DialogTitle>🔗 Golem DB Verification</DialogTitle>
-                <DialogDescription>Real-time data: Fetched from Golem DB via backend API, showing latest verification with full blockchain metadata and annotations</DialogDescription>
+                <DialogDescription>Real-time data: Fetched directly from Golem DB via integrated Next.js API route, showing latest verification with full blockchain metadata and annotations</DialogDescription>
             </DialogHeader>
             <div className="py-4 space-y-4">
               {isLoading ? (
